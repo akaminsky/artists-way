@@ -1,0 +1,235 @@
+/*
+ * Resurface Design System — Colors & Typography
+ * Sources: Resurface/DesignSystem/Colors+Extensions.swift,
+ *          Resurface/DesignSystem/Typography.swift,
+ *          Resurface/Assets.xcassets/*.colorset
+ *
+ * Font notes:
+ *   --font-serif  → Fraunces (design) / New York (system) / Georgia (fallback)
+ *   --font-sans   → Inter (design) / SF Pro (system) / system-ui (fallback)
+ *   --font-mono   → JetBrains Mono (design) / SF Mono / monospace (fallback)
+ *
+ * Google Fonts substitutes (flagged — not exact):
+ *   Fraunces  @import from fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@...
+ *   JetBrains Mono @import from fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─────────────────────────────────────────────
+   BASE TOKENS — Light mode
+   ───────────────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --color-bg-primary:       #F3EDE2;  /* warm paper — app background            */
+  --color-surface-card:     #FBF6EB;  /* elevated card                           */
+  --color-surface-secondary:#ECE4D5;  /* inset: search field, pill toggle bg     */
+  --color-surface-edge:     #E4DAC6;  /* deepest paper — stacked peek layer      */
+
+  /* Text */
+  --color-text-primary:     #1C1814;  /* ink                                     */
+  --color-text-secondary:   #6B6359;  /* mid-tone                                */
+  --color-text-tertiary:    #9A9183;  /* muted meta labels                       */
+
+  /* Accent */
+  --color-accent:           #C5623F;  /* burnt sienna / terracotta               */
+
+  /* Separators (alpha-based; represent as solid equivalents) */
+  --color-separator:        rgba(28, 24, 20, 0.10);
+  --color-hairline-soft:    rgba(28, 24, 20, 0.06);
+
+  /* ── Semantic aliases ── */
+  --bg:       var(--color-bg-primary);
+  --surface:  var(--color-surface-card);
+  --fg1:      var(--color-text-primary);
+  --fg2:      var(--color-text-secondary);
+  --fg3:      var(--color-text-tertiary);
+  --accent:   var(--color-accent);
+  --sep:      var(--color-separator);
+  --hair:     var(--color-hairline-soft);
+}
+
+/* ─────────────────────────────────────────────
+   DARK MODE TOKENS
+   ───────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-primary:       #1B1916;
+    --color-surface-card:     #26231C;
+    --color-surface-secondary:#232019;
+    --color-surface-edge:     #26231C;
+
+    --color-text-primary:     #ECE4D5;
+    --color-text-secondary:   #B8AE9C;
+    --color-text-tertiary:    #807869;
+
+    --color-separator:        rgba(236, 228, 213, 0.10);
+    --color-hairline-soft:    rgba(236, 228, 213, 0.06);
+
+    /* accent unchanged */
+  }
+}
+
+/* ─────────────────────────────────────────────
+   FONTS
+   ───────────────────────────────────────────── */
+:root {
+  --font-serif: 'Fraunces', 'New York', Georgia, serif;
+  --font-sans:  'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:  'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
+}
+
+/* ─────────────────────────────────────────────
+   SPACING SCALE  (8-point base)
+   ───────────────────────────────────────────── */
+:root {
+  --space-xxs: 4px;
+  --space-xs:  8px;
+  --space-sm:  12px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-xxl: 48px;
+}
+
+/* ─────────────────────────────────────────────
+   CORNER RADII
+   ───────────────────────────────────────────── */
+:root {
+  --radius-card:    14px;  /* lesson cards, compose panels         */
+  --radius-field:   10px;  /* search field, inset panels           */
+  --radius-button:  12px;  /* save / primary button                */
+  --radius-pill:    14px;  /* capsule pill buttons                 */
+  --radius-tag:      4px;  /* mono label badge (e.g. "how", "KEPT") */
+  --radius-frame:   12px;  /* frame picker rows                    */
+}
+
+/* ─────────────────────────────────────────────
+   SHADOWS
+   ───────────────────────────────────────────── */
+:root {
+  --shadow-card:
+    0 6px 20px rgba(0,0,0,0.08),
+    0 1px  2px rgba(0,0,0,0.06);
+
+  --shadow-card-peek:
+    0 2px  6px rgba(0,0,0,0.06),
+    0 1px  2px rgba(0,0,0,0.04);
+
+  --shadow-fab:
+    0 6px 12px rgba(0,0,0,0.18),
+    0 1px  2px rgba(0,0,0,0.10);
+
+  --shadow-accent-glow:
+    0 1px 4px rgba(197,98,63,0.35);
+}
+
+/* ─────────────────────────────────────────────
+   TYPOGRAPHY ROLES
+   ───────────────────────────────────────────── */
+
+/* rsDisplay — 26px medium serif — card titles, editor headings */
+.rs-display {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+/* rsRowTitle — 18px medium serif — list row titles */
+.rs-row-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/* rsBody — 17px regular serif — lesson body text */
+.rs-body {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+/* rsQuote — 22px italic serif — quote blocks */
+.rs-quote {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+/* rsReflection — 15px italic serif — secondary body / prompts */
+.rs-reflection {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* rsChrome — 13px medium sans — pill toggles, filter tabs */
+.rs-chrome {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* rsLabel — 10px medium mono, tracked, uppercase — all metadata */
+.rs-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+
+/* ─────────────────────────────────────────────
+   SEMANTIC ELEMENT DEFAULTS
+   ───────────────────────────────────────────── */
+body {
+  background-color: var(--bg);
+  color: var(--fg1);
+  font-family: var(--font-serif);
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 { font-family: var(--font-serif); font-size: 26px; font-weight: 500; }
+h2 { font-family: var(--font-serif); font-size: 22px; font-weight: 400; font-style: italic; }
+h3 { font-family: var(--font-serif); font-size: 18px; font-weight: 500; }
+p  { font-family: var(--font-serif); font-size: 17px; font-weight: 400; line-height: 1.55; }
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* ─────────────────────────────────────────────
+   UTILITY CLASSES
+   ───────────────────────────────────────────── */
+.text-primary   { color: var(--color-text-primary);   }
+.text-secondary { color: var(--color-text-secondary); }
+.text-tertiary  { color: var(--color-text-tertiary);  }
+.text-accent    { color: var(--color-accent);         }
+
+.bg-app     { background: var(--color-bg-primary);        }
+.bg-card    { background: var(--color-surface-card);      }
+.bg-inset   { background: var(--color-surface-secondary); }
+.bg-edge    { background: var(--color-surface-edge);      }
+
+.card {
+  background: var(--color-surface-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.rs-accent-rule {
+  height: 1.5px;
+  background: var(--color-accent);
+  border: none;
+  margin: var(--space-md) var(--space-lg);
+}
