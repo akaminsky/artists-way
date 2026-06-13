@@ -30,7 +30,7 @@ export function useCircle() {
       supabase.from('memberships').select('user_id, started_on, paused_at, joined_at').eq('cohort_id', cohortId),
       supabase.from('morning_pages').select('user_id, date').eq('cohort_id', cohortId).gte('date', weekDates[0]).lte('date', weekDates[6]),
       supabase.from('artist_dates').select('user_id, week').eq('cohort_id', cohortId),
-      supabase.from('exercises').select('id, week').eq('cohort_id', cohortId),
+      supabase.from('exercises').select('id, week'),
       supabase.from('exercise_progress').select('user_id, exercise_id').eq('cohort_id', cohortId).eq('completed', true),
       supabase.from('weekly_checkins').select('user_id, week, mood, looking_forward, share_text, created_at').eq('cohort_id', cohortId),
     ])

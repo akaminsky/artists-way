@@ -33,7 +33,7 @@ export function useJourney() {
       supabase.from('weekly_checkins').select('week, mood, looking_forward, share_text, created_at').eq('user_id', uid),
       supabase.from('artist_dates').select('week').eq('user_id', uid),
       supabase.from('artist_date_details').select('week, what_i_did').eq('user_id', uid),
-      supabase.from('exercises').select('id, week, label').eq('cohort_id', cohortId),
+      supabase.from('exercises').select('id, week, label'),
       supabase.from('exercise_answers').select('exercise_id, answer').eq('user_id', uid),
       supabase.from('morning_pages').select('date').eq('user_id', uid),
     ])

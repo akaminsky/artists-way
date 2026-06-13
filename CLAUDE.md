@@ -21,9 +21,17 @@ Live backend facts:
 - Schema fully applied. Migrations: `0001` (initial — applied via dashboard,
   NOT in the ledger), `0002` (SECURITY DEFINER grant hardening), `0003` (cohort
   RPCs), `0004` (realtime: shared tables), `0005` (realtime: ideas), `0006`
-  (`memberships.paused_at` for pause). The `0001` ledger gap is cosmetic.
-- Exercise catalog seeded via `supabase/seed_exercises.sql` (re-runnable; targets
-  the cohort by invite code). Source images live in `exercises/` which is
+  (`memberships.paused_at` for pause), `0007` (**exercise catalog made GLOBAL** —
+  dropped `exercises.cohort_id`; one shared 12-week set for every cohort; reads
+  open to authenticated, writes seed-only), `0008` (`cohorts.created_by` made
+  nullable — fixed a NOT-NULL vs `on delete set null` contradiction that errored
+  when a cohort creator's account was deleted). The `0001` ledger gap is cosmetic.
+- Exercise catalog is **global + already seeded** (103 rows, all 12 weeks) via
+  `supabase/seed_exercises.sql` (re-runnable; upserts on `(week, sort)` so it
+  never deletes progress). No per-cohort re-seeding — new circles inherit it.
+  `exercise_progress` still carries `cohort_id` for the Circle's shared-read RLS;
+  only the catalog (prompts) is global. App queries select exercises by `week`
+  only (no cohort filter). Source images live in `exercises/` which is
   **gitignored** (third-party material — not committed/published).
 - `.env.local` is filled (URL + legacy anon key) so the app runs in backend
   mode. Auth URL config done in the dashboard: Site URL + redirect
@@ -238,14 +246,15 @@ src/
   date freezes the week; resume shifts `started_on` by the paused span). `ref` =
   `paused_at || today` (see `memberWeek`). This addressed the old "week keeps
   ticking even if you fall behind" worry — you can pause or dial it back.
-- **Seed all 12 weeks of exercises up front** (resolved session 2). The
-  `exercises` catalog is cohort-scoped and any member can author rows. UPDATE
-  (session 3): the circle decided to use the actual Artist's Way weekly task
-  lists (condensed task summaries they sourced), not self-written prompts. All
-  12 weeks seeded once via `supabase/seed_exercises.sql` — week-specific tasks
-  only; the recurring tools (morning pages, weekly artist date, daily readings,
-  check-in) are excluded because the app already tracks those separately. It's a
-  private circle of 5; treat the catalog text as their personal-use material.
+- **Seed all 12 weeks of exercises up front** (resolved session 2). UPDATE
+  (session 3, late): the catalog is now **GLOBAL** (migration `0007`) — one
+  shared set for every cohort, not cohort-scoped, and **seeded once** via
+  `supabase/seed_exercises.sql`; writes are seed/admin-only (no in-app authoring).
+  The circle uses the actual Artist's Way weekly task lists (condensed summaries
+  they sourced), week-specific tasks only; the recurring tools (morning pages,
+  weekly artist date, daily readings, check-in) are excluded because the app
+  tracks those separately. Private circle of 5; treat the catalog text as their
+  personal-use material.
 
 ## Backend plan (start here tomorrow)
 

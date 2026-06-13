@@ -47,7 +47,7 @@ export function useTracking() {
       supabase.from('artist_date_details').select('what_i_did')
         .eq('user_id', uid).eq('week', week).maybeSingle(),
       supabase.from('exercises').select('id,label,prompt,sort')
-        .eq('cohort_id', cohortId).eq('week', week).order('sort'),
+        .eq('week', week).order('sort'),
       supabase.from('weekly_checkins').select('mood, looking_forward, share_text')
         .eq('user_id', uid).eq('week', week).maybeSingle(),
     ])

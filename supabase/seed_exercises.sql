@@ -1,28 +1,17 @@
--- tend — exercise catalog seed (The Artist's Way, 12 weeks)
+-- meraki — exercise catalog seed (The Artist's Way, 12 weeks) — GLOBAL
 -- ===========================================================================
--- Source: the weekly Task lists the circle is working from (condensed task
--- summaries). The recurring tools that already have dedicated places in the app
--- are intentionally NOT here: Daily Morning Pages (Today card), the weekly
--- Artist Date (Today card), "read the Basic Principles / affirmations daily"
--- (a daily practice), and the weekly check-in (Check-in screen). What remains is
--- each week's specific written/active exercises.
+-- The catalog is global (one shared set for every cohort; see migration 0007).
+-- Source: the weekly Task lists the circle works from (condensed task
+-- summaries). The recurring tools with dedicated places in the app are NOT here
+-- (Daily Morning Pages, the weekly Artist Date, daily readings, the check-in) —
+-- what remains is each week's specific written/active exercises.
 --
--- Targets a cohort BY INVITE CODE so there's no hard-coded UUID. Re-runnable:
--- it clears this cohort's exercises first, then re-inserts.
--- NOTE: `exercises` deletes cascade to `exercise_progress` / `exercise_answers`,
--- so re-running resets everyone's exercise checkmarks + answers for this cohort.
--- Safe while no real progress exists; be deliberate about re-running later.
+-- Re-runnable: upserts on (week, sort), so re-seeding updates text in place
+-- without deleting rows — preserving everyone's exercise_progress/answers.
 -- ===========================================================================
 
-begin;
-
-delete from public.exercises
-where cohort_id = (select id from public.cohorts where invite_code = 'DU74EV');
-
-insert into public.exercises (cohort_id, week, label, prompt, sort)
-select c.id, v.week, v.label, v.prompt, v.sort
-from (select id from public.cohorts where invite_code = 'DU74EV') c
-cross join (values
+insert into public.exercises (week, label, prompt, sort)
+values
   -- Week 1 — Recovering a Sense of Safety
   (1, 'Convert your blurts',          'At the end of each day''s morning pages, turn that day''s negative thoughts ("blurts") into positive affirmations. Read the creative affirmations daily.', 1),
   (1, 'Three creative enemies',       'Time travel: list three people who discouraged your creativity.', 2),
@@ -149,6 +138,5 @@ cross join (values
   (12, 'What would you create?',      'Honestly: what would you most love to create? What oddball paths would you dare? What appearances are you willing to shed to pursue it?', 8),
   (12, 'Five to dream with',          'List five people you can talk to about your dreams and plans.', 9),
   (12, 'Reread and share',            'Reread the book and share it with a friend — the miracle is one artist sharing with another.', 10)
-) as v(week, label, prompt, sort);
-
-commit;
+on conflict (week, sort) do update
+  set label = excluded.label, prompt = excluded.prompt;
