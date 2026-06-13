@@ -2,6 +2,7 @@
 import { C, SERIF, ACCENT, ACCENT_SOFT } from '../lib/theme'
 import { Icon, MonoLabel, Checkbox, PagesStrip } from '../components/primitives'
 import { WEEK, DATE, DAY_LETTERS, EXERCISES } from '../data/seed'
+import { audioForWeek } from '../data/chapters'
 import { weekdayIndex } from '../lib/week'
 
 export default function Today({ me, setMe, track, name, openDetail, openCheckin, openIdeas }) {
@@ -127,6 +128,21 @@ export default function Today({ me, setMe, track, name, openDetail, openCheckin,
       </Card>
 
       <SectionLabel>This week</SectionLabel>
+
+      {/* Listen to this week's chapter (Spotify audiobook) */}
+      {audioForWeek(exWeek) && (
+        <a href={audioForWeek(exWeek)} target="_blank" rel="noopener noreferrer"
+          style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none',
+            background: C.card, borderRadius: 14, boxShadow: '0 6px 20px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.05)',
+            padding: '14px 18px', WebkitTapHighlightColor: 'transparent' }}>
+          <Icon name="headphones" size={20} stroke={ACCENT} sw={1.7} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: C.ink }}>Listen to this week’s chapter</div>
+            <div style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.mid, marginTop: 2 }}>The Artist’s Way on Spotify</div>
+          </div>
+          <Icon name="arrow" size={16} stroke={C.edge} style={{ flexShrink: 0 }} />
+        </a>
+      )}
 
       {/* Artist Date */}
       <Card onClick={() => openDetail({
