@@ -318,16 +318,21 @@ through `memberships`.
   library could auto-create an entry in You → Artist Dates. Cleaner to wire once
   the backend exists.
 - **Hosting:** RESOLVED — GitHub Pages. `.github/workflows/deploy.yml` builds on
-  push to `main` and publishes `dist/` to Pages (base is `./` in vite.config, so
-  the subpath `https://akaminsky.github.io/artists-way/` works; no router → no SPA
-  404 issue). `appBaseUrl()` in `src/lib/invite.js` derives the served URL
-  (origin + dir) so invite links + the magic-link `emailRedirectTo` respect the
-  subpath. **Manual one-time steps to go live:** (1) add repo secrets
-  `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (Settings → Secrets → Actions);
-  (2) Settings → Pages → source = GitHub Actions; (3) repo must be public (or
-  Pro); (4) add `https://akaminsky.github.io/artists-way/**` to Supabase Auth →
-  URL Configuration (Site URL + redirect). Custom domain later = set CNAME +
-  add that URL to the Supabase allowlist; no code change (appBaseUrl handles it).
+  push to `main` and publishes `dist/` to Pages (base is `./` in vite.config; no
+  router → no SPA 404 issue). `appBaseUrl()` in `src/lib/invite.js` derives the
+  served URL (origin + dir) so invite links + the magic-link `emailRedirectTo`
+  respect the subpath AND the custom domain.
+  **PROD URL = `https://alexakaminsky.com/artists-way/`** — the account has a
+  Pages **custom domain `alexakaminsky.com`**, so `akaminsky.github.io/*` 301s to
+  it; the app serves at `alexakaminsky.com/artists-way/`. Supabase Auth allow-list
+  + Site URL must use the **custom-domain** URL (`https://alexakaminsky.com/artists-way/**`),
+  not the github.io one (which redirects away).
+  **One-time go-live steps:** (1) repo secrets `VITE_SUPABASE_URL` +
+  `VITE_SUPABASE_ANON_KEY` (Settings → Secrets → Actions); (2) Settings → Pages →
+  source = GitHub Actions; (3) repo public (or Pro); (4) Supabase Auth → URL
+  Configuration: Site URL + redirect `https://alexakaminsky.com/artists-way/**`
+  (+ keep `http://localhost:5173/**` for dev); (5) run the workflow. As of last
+  session the project Pages 404s → deploy not yet published.
 - **Reactions on shared wins:** add a tiny acknowledgment or keep fully quiet.
 
 ## People in the prototype (placeholders)
