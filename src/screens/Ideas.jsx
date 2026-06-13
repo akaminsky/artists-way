@@ -3,37 +3,59 @@ import { useState } from 'react'
 import { C, SERIF, SANS, MONO, ACCENT, ACCENT_SOFT } from '../lib/theme'
 import { Icon, Checkbox, MonoLabel } from '../components/primitives'
 import { IDEAS, IDEA_CATEGORIES, IDEA_COSTS, IDEA_SETTINGS, IDEA_SOCIAL } from '../data/seed'
+import { useIdeas } from '../lib/ideas'
 
 const EMPTY_DRAFT = { title: '', category: 'Nature', cost: 'Free', setting: 'Indoor', social: 'Solo', shared: true }
 
-export default function Ideas({ me, setMe }) {
+// Local prototype → the same unified idea shape the backend hook returns.
+function localIdeas(me) {
+  return [...me.addedIdeas, ...IDEAS].map((i) => ({
+    id: i.id, title: i.title,
+    createdByYou: i.by === 'you', by: i.by,
+    shared: i.shared !== false,
+    tags: i.tags,
+    saved: !!me.ideas[i.id]?.saved,
+    done: !!me.ideas[i.id]?.done,
+  }))
+}
+
+export default function Ideas({ me, setMe, onPick }) {
+  const api = useIdeas()
+  const backend = api.ready
+
   const [view, setView] = useState('mine')   // 'mine' (your ideas) | 'shared' (the group's pool)
   const [filter, setFilter] = useState('All')
   const [composing, setComposing] = useState(false)
   const [draft, setDraft] = useState(EMPTY_DRAFT)
 
-  const isSaved = (id) => !!me.ideas[id]?.saved
-  const isDone = (id) => !!me.ideas[id]?.done
+  const ideas = backend ? api.ideas : localIdeas(me)
 
-  const toggleSave = (id) => setMe((m) => ({ ...m, ideas: { ...m.ideas, [id]: { ...(m.ideas[id] || {}), saved: !m.ideas[id]?.saved } } }))
-  const toggleDone = (id) => setMe((m) => ({ ...m, ideas: { ...m.ideas, [id]: { ...(m.ideas[id] || {}), done: !m.ideas[id]?.done } } }))
+  const toggleSave = backend
+    ? api.toggleSave
+    : (id) => setMe((m) => ({ ...m, ideas: { ...m.ideas, [id]: { ...(m.ideas[id] || {}), saved: !m.ideas[id]?.saved } } }))
+  const toggleDone = backend
+    ? api.toggleDone
+    : (id) => setMe((m) => ({ ...m, ideas: { ...m.ideas, [id]: { ...(m.ideas[id] || {}), done: !m.ideas[id]?.done } } }))
 
   const saveDraft = () => {
-    const title = draft.title.trim()
-    if (!title) return
-    const id = 'u' + Date.now()
-    const idea = { id, title, by: 'you', shared: draft.shared, tags: { category: draft.category, cost: draft.cost, setting: draft.setting, social: draft.social } }
-    setMe((m) => ({ ...m, addedIdeas: [idea, ...m.addedIdeas], ideas: { ...m.ideas, [id]: { saved: true, done: false } } }))
+    if (!draft.title.trim()) return
+    if (backend) {
+      api.addIdea(draft)
+    } else {
+      const id = 'u' + Date.now()
+      const idea = { id, title: draft.title.trim(), by: 'you', shared: draft.shared, tags: { category: draft.category, cost: draft.cost, setting: draft.setting, social: draft.social } }
+      setMe((m) => ({ ...m, addedIdeas: [idea, ...m.addedIdeas], ideas: { ...m.ideas, [id]: { saved: true, done: false } } }))
+    }
     setDraft(EMPTY_DRAFT)
     setComposing(false)
     setView('mine')
   }
 
-  const all = [...me.addedIdeas, ...IDEAS]
-  const base = view === 'mine' ? all.filter((i) => isSaved(i.id)) : all.filter((i) => i.shared !== false)
-  const list = filter === 'All' ? base : base.filter((i) => i.tags.category === filter)
-  // done ones sink to the bottom
-  list.sort((a, b) => (isDone(a.id) === isDone(b.id) ? 0 : isDone(a.id) ? 1 : -1))
+  const base = view === 'mine' ? ideas.filter((i) => i.saved) : ideas.filter((i) => i.shared)
+  const list = (filter === 'All' ? base : base.filter((i) => i.tags.category === filter))
+    .slice()
+    // done ones sink to the bottom
+    .sort((a, b) => (a.done === b.done ? 0 : a.done ? 1 : -1))
 
   // ── small inline pieces (no text inputs inside → safe to define here) ──
   const Card = ({ children, style = {} }) => (
@@ -63,8 +85,7 @@ export default function Ideas({ me, setMe }) {
   )
 
   const IdeaCard = ({ idea }) => {
-    const done = isDone(idea.id)
-    const saved = isSaved(idea.id)
+    const { done, saved } = idea
     const { category, cost, setting, social } = idea.tags
     return (
       <Card style={{ opacity: done ? 0.62 : 1 }}>
@@ -78,7 +99,7 @@ export default function Ideas({ me, setMe }) {
               <MonoLabel>{category} · {cost} · {setting} · {social}</MonoLabel>
             </div>
             <div style={{ marginTop: 7 }}>
-              {idea.by === 'you'
+              {idea.createdByYou
                 ? <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: ACCENT }}>your idea</span>
                 : <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>from {idea.by}</span>}
             </div>
@@ -88,6 +109,13 @@ export default function Ideas({ me, setMe }) {
             <Icon name="bookmark" size={20} stroke={saved ? ACCENT : C.muted} fill={saved ? ACCENT : 'none'} sw={1.7} />
           </button>
         </div>
+        {onPick && (
+          <button onClick={() => onPick(idea)}
+            style={{ marginTop: 12, width: '100%', border: `1px solid ${ACCENT}`, borderRadius: 11, padding: '10px',
+              background: ACCENT_SOFT, color: ACCENT, fontFamily: SERIF, fontSize: 14.5, fontWeight: 500, cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+            Use for this week
+          </button>
+        )}
       </Card>
     )
   }

@@ -1,19 +1,71 @@
-// tend — Screen 1: Daily home
-import { C, SERIF, ACCENT } from '../lib/theme'
+// tend — Screen 1: Daily home (the solo practice, by cadence: today + this week)
+import { C, SERIF, ACCENT, ACCENT_SOFT } from '../lib/theme'
 import { Icon, MonoLabel, Checkbox, PagesStrip } from '../components/primitives'
 import { WEEK, DATE, DAY_LETTERS, EXERCISES } from '../data/seed'
+import { weekdayIndexMon } from '../lib/week'
 
-export default function Today({ me, setMe, openDetail }) {
-  const pagesDone = me.pages.filter(Boolean).length
-  const todayDone = me.pages[me.todayIndex]
-  const exDone = Object.values(me.exercises).filter(Boolean).length
+export default function Today({ me, setMe, track, name, openDetail, openCheckin, openIdeas }) {
+  // Morning Pages + Artist Date read/write the backend when it's live (`track`);
+  // otherwise they fall back to the local prototype `me`. Exercises are still on
+  // `me` — they migrate in the next sub-step (they need the cohort catalog).
+  const t = track && track.ready ? track : null
+  const displayName = name || me.name
 
-  const toggleToday = () => setMe((m) => {
-    const pages = m.pages.slice(); pages[m.todayIndex] = !pages[m.todayIndex]
-    return { ...m, pages }
-  })
-  const toggleAD = () => setMe((m) => ({ ...m, artistDate: { ...m.artistDate, done: !m.artistDate.done } }))
-  const toggleEx = (id) => setMe((m) => ({ ...m, exercises: { ...m.exercises, [id]: !m.exercises[id] } }))
+  // Morning Pages
+  const pages = t ? t.pages : me.pages
+  const pagesTodayIndex = t ? t.todayIndex : me.todayIndex
+  const pagesDone = t ? t.pagesDone : me.pages.filter(Boolean).length
+  const todayDone = pages[pagesTodayIndex]
+  const toggleToday = t
+    ? t.toggleToday
+    : () => setMe((m) => {
+        const p = m.pages.slice(); p[m.todayIndex] = !p[m.todayIndex]
+        return { ...m, pages: p }
+      })
+  // tap any past/today dot in the strip to log it (catch up on a missed day)
+  const toggleDay = t
+    ? t.toggleDay
+    : (i) => setMe((m) => {
+        if (i > m.todayIndex) return m
+        const p = m.pages.slice(); p[i] = !p[i]
+        return { ...m, pages: p }
+      })
+  const missedDay = pages.slice(0, pagesTodayIndex).some((d) => !d)
+
+  // Artist Date
+  const adDone = t ? t.artistDone : me.artistDate.done
+  const adPlan = t ? t.artistPlan : me.artistDate.plan
+  const toggleAD = t
+    ? t.toggleArtistDate
+    : () => setMe((m) => ({ ...m, artistDate: { ...m.artistDate, done: !m.artistDate.done } }))
+  const saveADPlan = t
+    ? t.saveArtistPlan
+    : (note) => setMe((m) => ({ ...m, artistDate: { ...m.artistDate, plan: note } }))
+
+  // Exercises: from the cohort catalog when live, else the local seed list.
+  const exItems = t
+    ? t.exercises
+    : EXERCISES.map((ex) => ({ id: ex.id, label: ex.label, prompt: ex.prompt, done: !!me.exercises[ex.id], answer: me.exerciseNotes[ex.id] || '' }))
+  const exDone = t ? t.exercisesDone : Object.values(me.exercises).filter(Boolean).length
+  const exWeek = t ? t.week : WEEK.n
+  const toggleEx = t
+    ? t.toggleExercise
+    : (id) => setMe((m) => ({ ...m, exercises: { ...m.exercises, [id]: !m.exercises[id] } }))
+  const saveExAnswer = t
+    ? t.saveExerciseAnswer
+    : (id, note) => setMe((m) => ({
+        ...m,
+        exerciseNotes: { ...m.exerciseNotes, [id]: note },
+        // a non-empty answer also marks it done (mirrors the backend behavior)
+        exercises: { ...m.exercises, [id]: note && note.trim() ? true : m.exercises[id] },
+      }))
+
+  // Weekly check-in nudge: a gentle cross-link as Sunday's call nears (Fri–Sun),
+  // only while you haven't shared yet. The check-in's real home is Circle.
+  const checkedIn = t
+    ? Boolean(t.checkin && (t.checkin.mood || t.checkin.looking_forward || t.checkin.share_text))
+    : Boolean(me.checkin.shared)
+  const showCheckinNudge = Boolean(openCheckin) && weekdayIndexMon() >= 4 && !checkedIn
 
   const Card = ({ children, onClick, style = {} }) => (
     <div onClick={onClick} style={{
@@ -30,18 +82,24 @@ export default function Today({ me, setMe, openDetail }) {
     </div>
   )
 
+  const SectionLabel = ({ children }) => (
+    <MonoLabel style={{ display: 'block', margin: '6px 2px -4px' }}>{children}</MonoLabel>
+  )
+
   return (
     <div style={{ padding: '6px 20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Title block */}
       <div style={{ padding: '6px 2px 2px' }}>
         <MonoLabel>{DATE.weekday} · {DATE.day}</MonoLabel>
         <h1 style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 500, color: C.ink, lineHeight: 1.2, margin: '8px 0 0' }}>
-          Good morning, {me.name}.
+          Good morning, {displayName}.
         </h1>
         <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.mid, marginTop: 6 }}>
           A quiet page is waiting.
         </p>
       </div>
+
+      <SectionLabel>Today</SectionLabel>
 
       {/* Morning Pages — just a checkbox, no writing */}
       <Card>
@@ -56,65 +114,97 @@ export default function Today({ me, setMe, openDetail }) {
         </div>
         <div style={{ height: 1, background: C.hair, margin: '16px 0 14px' }} />
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          <PagesStrip days={me.pages} todayIndex={me.todayIndex} letters={DAY_LETTERS} />
+          <PagesStrip days={pages} todayIndex={pagesTodayIndex} letters={DAY_LETTERS}
+            interactive onToggle={toggleDay} maxIndex={pagesTodayIndex} />
           <MonoLabel>{pagesDone} / 7 this week</MonoLabel>
         </div>
+        {missedDay && (
+          <p style={{ fontFamily: SERIF, fontSize: 12.5, fontStyle: 'italic', color: C.muted, margin: '11px 0 0' }}>
+            Missed a day? Tap it to log it.
+          </p>
+        )}
       </Card>
+
+      <SectionLabel>This week</SectionLabel>
 
       {/* Artist Date */}
       <Card onClick={() => openDetail({
         kicker: 'Artist Date · this week', title: 'Where will you take yourself?',
         prompt: 'One solo outing, just for delight. A museum, a fabric store, a long walk somewhere new.',
-        placeholder: 'my plan for this week…', note: me.artistDate.plan || '',
-        save: (note) => setMe((m) => ({ ...m, artistDate: { ...m.artistDate, plan: note } })),
+        placeholder: 'my plan for this week…', note: adPlan || '',
+        save: saveADPlan,
       })}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <CardTitle icon="feather" label="Artist date" />
-            <p style={{ fontFamily: SERIF, fontSize: me.artistDate.plan ? 16 : 14.5, fontStyle: 'italic', color: me.artistDate.plan ? C.ink : C.mid, margin: '8px 0 0', lineHeight: 1.45 }}>
-              {me.artistDate.plan || 'Where will you take yourself this week?'}
+            <p style={{ fontFamily: SERIF, fontSize: adPlan ? 16 : 14.5, fontStyle: 'italic', color: adPlan ? C.ink : C.mid, margin: '8px 0 0', lineHeight: 1.45 }}>
+              {adPlan || 'Where will you take yourself this week?'}
             </p>
           </div>
-          <Checkbox checked={me.artistDate.done} onClick={toggleAD} />
+          <Checkbox checked={adDone} onClick={toggleAD} />
         </div>
-        {!me.artistDate.plan && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 14 }}>
-            <Icon name="pen" size={13} stroke={C.muted} />
-            <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted, whiteSpace: 'nowrap' }}>tap to plan it</span>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14 }}>
+          {!adPlan && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="pen" size={13} stroke={C.muted} />
+              <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted, whiteSpace: 'nowrap' }}>tap to plan it</span>
+            </span>
+          )}
+          <button onClick={(e) => { e.stopPropagation(); openIdeas() }}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5, WebkitTapHighlightColor: 'transparent' }}>
+            <Icon name="bulb" size={14} stroke={ACCENT} sw={1.7} />
+            <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: ACCENT, whiteSpace: 'nowrap' }}>browse ideas</span>
+          </button>
+        </div>
       </Card>
 
       {/* This week's work */}
       <Card>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <CardTitle icon="leaf">This week’s exercises</CardTitle>
-          <MonoLabel>{exDone} / {EXERCISES.length}</MonoLabel>
+          <MonoLabel>{exDone} / {exItems.length}</MonoLabel>
         </div>
         <p style={{ fontFamily: SERIF, fontSize: 13.5, fontStyle: 'italic', color: C.mid, margin: '7px 0 4px' }}>
-          Week {WEEK.n} — {WEEK.title}.
+          Week {exWeek}{!t ? ` — ${WEEK.title}` : ''}.
         </p>
-        <div style={{ marginTop: 8 }}>
-          {EXERCISES.map((ex, i) => {
-            const done = me.exercises[ex.id]
-            return (
-              <div key={ex.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '9px 0', borderTop: i === 0 ? 'none' : `1px solid ${C.hair}` }}>
-                <Checkbox checked={done} onClick={() => toggleEx(ex.id)} size={22} />
-                <button onClick={() => openDetail({
-                  kicker: `Week ${WEEK.n} · exercise ${i + 1}`, title: ex.label, prompt: ex.prompt,
-                  placeholder: 'work it out here…', note: me.exerciseNotes[ex.id] || '',
-                  save: (note) => setMe((m) => ({ ...m, exerciseNotes: { ...m.exerciseNotes, [ex.id]: note } })),
-                })}
-                  style={{ flex: 1, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}>
-                  <span style={{ fontFamily: SERIF, fontSize: 15.5, lineHeight: 1.35, color: done ? C.muted : C.ink, textDecoration: done ? 'line-through' : 'none', textDecorationColor: 'rgba(154,145,131,0.6)' }}>{ex.label}</span>
-                </button>
-                {me.exerciseNotes[ex.id] && <Icon name="pen" size={13} stroke={C.muted} style={{ flexShrink: 0 }} />}
-                <Icon name="chevR" size={15} stroke={C.edge} style={{ flexShrink: 0 }} />
-              </div>
-            )
-          })}
-        </div>
+        {exItems.length === 0 ? (
+          <p style={{ fontFamily: SERIF, fontSize: 14.5, fontStyle: 'italic', color: C.muted, margin: '12px 0 2px', lineHeight: 1.45 }}>
+            No exercises set for this week yet.
+          </p>
+        ) : (
+          <div style={{ marginTop: 8 }}>
+            {exItems.map((ex, i) => {
+              const done = ex.done
+              return (
+                <div key={ex.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '9px 0', borderTop: i === 0 ? 'none' : `1px solid ${C.hair}` }}>
+                  <Checkbox checked={done} onClick={() => toggleEx(ex.id)} size={22} />
+                  <button onClick={() => openDetail({
+                    kicker: `Week ${exWeek} · exercise ${i + 1}`, title: ex.label, prompt: ex.prompt,
+                    placeholder: 'work it out here…', note: ex.answer || '',
+                    save: (note) => saveExAnswer(ex.id, note),
+                  })}
+                    style={{ flex: 1, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}>
+                    <span style={{ fontFamily: SERIF, fontSize: 15.5, lineHeight: 1.35, color: done ? C.muted : C.ink, textDecoration: done ? 'line-through' : 'none', textDecorationColor: 'rgba(154,145,131,0.6)' }}>{ex.label}</span>
+                  </button>
+                  {ex.answer && <Icon name="pen" size={13} stroke={C.muted} style={{ flexShrink: 0 }} />}
+                  <Icon name="chevR" size={15} stroke={C.edge} style={{ flexShrink: 0 }} />
+                </div>
+              )
+            })}
+          </div>
+        )}
       </Card>
+
+      {/* gentle cross-link to the check-in (its home is Circle) as the call nears */}
+      {showCheckinNudge && (
+        <button onClick={openCheckin}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            background: ACCENT_SOFT, border: `1px dashed ${ACCENT}`, borderRadius: 14, padding: '14px',
+            cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+          <Icon name="pen" size={15} stroke={ACCENT} sw={1.7} />
+          <span style={{ fontFamily: SERIF, fontSize: 14.5, fontWeight: 500, color: ACCENT }}>Sunday’s call is coming — share your check-in</span>
+        </button>
+      )}
     </div>
   )
 }

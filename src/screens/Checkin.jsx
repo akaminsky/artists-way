@@ -1,5 +1,5 @@
 // tend — Screen 4: Weekly check-in
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { C, SERIF, ACCENT } from '../lib/theme'
 import { Icon, MonoLabel, MoodGlyph } from '../components/primitives'
 import { WEEK, MOODS } from '../data/seed'
@@ -25,24 +25,57 @@ function Field({ label, optional, value, onChange, placeholder, rows = 3 }) {
   )
 }
 
-export default function Checkin({ me, setMe }) {
-  const ci = me.checkin
+export default function Checkin({ me, setMe, track, onClose }) {
+  // Backend mode keeps a local draft, seeded once from the saved row, and only
+  // writes to the circle on "Share". Local mode reads/writes me.checkin directly.
+  const t = track && track.ready ? track : null
   const [justShared, setJustShared] = useState(false)
+  const [draft, setDraft] = useState({ mood: '', forward: '', win: '' })
+  const [draftShared, setDraftShared] = useState(false)
+  const seeded = useRef(false)
 
-  const setCI = (patch) => setMe((m) => ({ ...m, checkin: { ...m.checkin, ...patch, shared: false } }))
-  const pickMood = (key) => setMe((m) => ({ ...m, checkin: { ...m.checkin, mood: m.checkin.mood === key ? '' : key, shared: false } }))
-  const share = () => {
-    setMe((m) => ({ ...m, checkin: { ...m.checkin, shared: true } }))
+  useEffect(() => {
+    if (!t || seeded.current || t.loading) return
+    seeded.current = true
+    if (t.checkin) {
+      setDraft({ mood: t.checkin.mood || '', forward: t.checkin.looking_forward || '', win: t.checkin.share_text || '' })
+      setDraftShared(true)
+    }
+  }, [t, t?.loading, t?.checkin])
+
+  const ci = t ? { ...draft, shared: draftShared } : me.checkin
+  const weekN = t ? t.week : WEEK.n
+
+  const setCI = (patch) => {
+    if (t) { setDraft((d) => ({ ...d, ...patch })); setDraftShared(false) }
+    else setMe((m) => ({ ...m, checkin: { ...m.checkin, ...patch, shared: false } }))
+  }
+  const pickMood = (key) => {
+    if (t) { setDraft((d) => ({ ...d, mood: d.mood === key ? '' : key })); setDraftShared(false) }
+    else setMe((m) => ({ ...m, checkin: { ...m.checkin, mood: m.checkin.mood === key ? '' : key, shared: false } }))
+  }
+  const share = async () => {
+    if (t) { await t.saveCheckin({ mood: draft.mood, forward: draft.forward, win: draft.win }); setDraftShared(true) }
+    else setMe((m) => ({ ...m, checkin: { ...m.checkin, shared: true } }))
     setJustShared(true)
     setTimeout(() => setJustShared(false), 2200)
   }
 
   return (
-    <div style={{ padding: '6px 20px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className={onClose ? 'app-frame' : undefined}>
+      {onClose && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(env(safe-area-inset-top) + 14px) 18px 4px', flexShrink: 0 }}>
+          <button onClick={onClose} aria-label="Back"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, margin: -6, display: 'flex' }}>
+            <Icon name="chevL" size={22} stroke={C.mid} />
+          </button>
+        </div>
+      )}
+      <div className={onClose ? 'app-scroll' : undefined} style={{ padding: '6px 20px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ padding: '6px 2px 0' }}>
         <MonoLabel>Check-in · before Sunday’s call</MonoLabel>
         <h1 style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 500, color: C.ink, lineHeight: 1.2, margin: '8px 0 0' }}>
-          How was your week {WEEK.n}?
+          How was your week {weekN}?
         </h1>
         <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.mid, marginTop: 6 }}>
           A few honest lines. Only what you choose is shared.
@@ -96,6 +129,7 @@ export default function Checkin({ me, setMe }) {
             ? <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: ACCENT }}>kept — see you Sunday.</span>
             : <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>You can change this any time before the call.</span>}
         </div>
+      </div>
       </div>
     </div>
   )

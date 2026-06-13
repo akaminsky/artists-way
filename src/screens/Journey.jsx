@@ -1,27 +1,70 @@
-// tend — Screen 2: Focus on you (your journey)
+// tend — Screen 2: Focus on you (your journey).
+// IA: a 12-week OVERVIEW on top (mood arc + morning-pages bars) that doubles as
+// a week navigator — tap a week to open everything for that week below (mood,
+// morning pages, artist date, check-in, exercise answers). One week at a time.
+import { useState } from 'react'
 import { C, SERIF, MONO, ACCENT } from '../lib/theme'
-import { Icon, MonoLabel } from '../components/primitives'
-import { WEEK, JOURNEY, EXERCISES, MOODS, moodByKey } from '../data/seed'
+import { Icon, MonoLabel, MoodChip, PagesStrip } from '../components/primitives'
+import { WEEK, JOURNEY, EXERCISES, moodByKey } from '../data/seed'
+import { useJourney } from '../lib/journey'
+
+const EMPTY_WEEK = [false, false, false, false, false, false, false]
 
 export default function Journey({ me, setMe, openDetail }) {
-  // ── mood per week (1..12); weeks 1-3 history, 4 live, rest pending ──
+  const j = useJourney()
+  const backend = j.ready
+  const currentWeek = backend ? j.week : WEEK.n
+  const [selWeek, setSelWeek] = useState(null)
+  const viewWeek = selWeek ?? currentWeek
+
+  // ── mood per week (1..12); future weeks stay empty ──
   const moodForWeek = (w) => {
+    if (w > currentWeek) return null
+    if (backend) return j.moods[w] || null
     if (w < WEEK.n) return JOURNEY.moods[w] || null
     if (w === WEEK.n) return me.checkin.mood || null
     return null
   }
 
-  // ── artist dates: live current week (if planned) + history ──
-  const artistDates = []
-  if (me.artistDate.plan) artistDates.push({ week: WEEK.n, place: me.artistDate.plan, done: me.artistDate.done })
-  JOURNEY.artistDates.forEach((d) => artistDates.push(d))
+  // ── history (real backend, or the local seed) ──
+  let artistDates, reflections
+  if (backend) {
+    artistDates = j.artistDates
+    reflections = j.reflections
+  } else {
+    artistDates = []
+    if (me.artistDate.plan) artistDates.push({ week: WEEK.n, place: me.artistDate.plan, done: me.artistDate.done })
+    JOURNEY.artistDates.forEach((d) => artistDates.push(d))
+    const liveRefs = EXERCISES
+      .filter((ex) => (me.exerciseNotes[ex.id] || '').trim())
+      .map((ex) => ({ id: ex.id, week: WEEK.n, title: ex.label, answer: me.exerciseNotes[ex.id], live: true }))
+    const pastRefs = JOURNEY.reflections.map((r) => ({ ...r, answer: me.pastEdits[r.id] || r.answer }))
+    reflections = [...liveRefs, ...pastRefs]
+  }
 
-  // ── exercises: live answered this week + history ──
-  const liveRefs = EXERCISES
-    .filter((ex) => (me.exerciseNotes[ex.id] || '').trim())
-    .map((ex) => ({ id: ex.id, week: WEEK.n, title: ex.label, answer: me.exerciseNotes[ex.id], live: true }))
-  const pastRefs = JOURNEY.reflections.map((r) => ({ ...r, answer: me.pastEdits[r.id] || r.answer }))
-  const reflections = [...liveRefs, ...pastRefs]
+  const saveReflection = (r, note) => {
+    if (backend) { j.saveAnswer(r.id, note); return }
+    if (r.live) setMe((m) => ({ ...m, exerciseNotes: { ...m.exerciseNotes, [r.id]: note } }))
+    else setMe((m) => ({ ...m, pastEdits: { ...m.pastEdits, [r.id]: note } }))
+  }
+
+  const pagesByWeek = backend ? j.pagesByWeek : { [currentWeek]: me.pages.filter(Boolean).length }
+  const pagesDaysByWeek = backend ? j.pagesDays : { [currentWeek]: me.pages }
+  const pagesTotal = backend ? j.pagesTotal : me.pages.filter(Boolean).length
+  const checkins = backend
+    ? j.checkins
+    : ((me.checkin.mood || me.checkin.forward || me.checkin.win)
+        ? [{ week: currentWeek, mood: me.checkin.mood, lookingForward: me.checkin.forward, shareText: me.checkin.win }]
+        : [])
+
+  // ── the selected week's pieces ──
+  const wMood = moodByKey(moodForWeek(viewWeek))
+  const wPages = pagesDaysByWeek[viewWeek] || EMPTY_WEEK
+  const wPagesCount = pagesByWeek[viewWeek] || 0
+  const wDate = artistDates.find((d) => d.week === viewWeek)
+  const wCheckin = checkins.find((c) => c.week === viewWeek)
+  const wRefs = reflections.filter((r) => r.week === viewWeek)
+  const future = viewWeek > currentWeek
 
   const Card = ({ children, onClick, style = {} }) => (
     <div onClick={onClick} style={{
@@ -30,18 +73,19 @@ export default function Journey({ me, setMe, openDetail }) {
     }}>{children}</div>
   )
 
-  const SectionLabel = ({ icon, children }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 2px 12px' }}>
-      <Icon name={icon} size={16} stroke={ACCENT} sw={1.7} />
-      <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: C.ink }}>{children}</span>
+  const Block = ({ label, children }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      <MonoLabel>{label}</MonoLabel>
+      {children}
     </div>
   )
+  const dash = <span style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.muted }}>—</span>
 
   return (
     <div style={{ padding: '6px 20px 24px' }}>
       {/* title */}
-      <div style={{ padding: '6px 2px 18px' }}>
-        <MonoLabel>Your journey · week {WEEK.n} of {WEEK.total}</MonoLabel>
+      <div style={{ padding: '6px 2px 16px' }}>
+        <MonoLabel>Your journey · week {currentWeek} of {WEEK.total}</MonoLabel>
         <h1 style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 500, color: C.ink, lineHeight: 1.2, margin: '8px 0 0' }}>
           Looking back
         </h1>
@@ -50,88 +94,149 @@ export default function Journey({ me, setMe, openDetail }) {
         </p>
       </div>
 
-      {/* ── Mood, week by week ── */}
-      <SectionLabel icon="sprout">Your mood, week by week</SectionLabel>
-      <Card style={{ marginBottom: 22 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 0 }}>
+      {/* ── Overview: mood arc + pages bars, both navigate ── */}
+      <Card style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <MonoLabel>Mood &amp; pages</MonoLabel>
+          <span style={{ fontFamily: SERIF, fontSize: 12, fontStyle: 'italic', color: C.muted }}>tap a week</span>
+        </div>
+
+        {/* mood dots */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {Array.from({ length: WEEK.total }).map((_, i) => {
             const w = i + 1
             const mood = moodByKey(moodForWeek(w))
-            const isNow = w === WEEK.n
-            const future = w > WEEK.n
+            const sel = w === viewWeek
+            const isFuture = w > currentWeek
             return (
-              <div key={w} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
+              <button key={w} onClick={() => setSelWeek(w)}
+                style={{ flex: 1, background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer', display: 'flex', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}>
                 <span style={{
                   width: 11, height: 11, borderRadius: '50%',
                   background: mood ? mood.color : 'transparent',
-                  border: mood ? `1px solid ${mood.color}` : `1px solid ${future ? C.edge : C.muted}`,
-                  opacity: future ? 0.5 : 1,
-                  boxShadow: isNow ? `0 0 0 3px ${mood ? mood.color + '22' : 'rgba(154,145,131,0.18)'}` : 'none',
+                  border: mood ? `1px solid ${mood.color}` : `1px solid ${isFuture ? C.edge : C.muted}`,
+                  opacity: isFuture ? 0.5 : 1,
+                  boxShadow: sel ? `0 0 0 3px ${mood ? mood.color + '33' : ACCENT_RING}` : 'none',
                 }} />
-                <span style={{ fontFamily: MONO, fontSize: 8, color: isNow ? ACCENT : C.muted, fontWeight: isNow ? 600 : 500 }}>{w}</span>
-              </div>
+              </button>
             )
           })}
         </div>
-        <div style={{ height: 1, background: C.hair, margin: '15px 0 13px' }} />
-        {/* legend */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '9px 14px' }}>
-          {MOODS.map((m) => (
-            <span key={m.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: m.color }} />
-              <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.mid }}>{m.label.toLowerCase()}</span>
-            </span>
-          ))}
+
+        {/* pages bars + week numbers */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 12 }}>
+          {Array.from({ length: WEEK.total }).map((_, i) => {
+            const w = i + 1
+            const count = pagesByWeek[w] || 0
+            const sel = w === viewWeek
+            const isFuture = w > currentWeek
+            const fill = Math.round((count / 7) * 30)
+            return (
+              <button key={w} onClick={() => setSelWeek(w)}
+                style={{ flex: 1, background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, WebkitTapHighlightColor: 'transparent' }}>
+                <div style={{ width: 8, height: 30, borderRadius: 4, background: C.inset, position: 'relative', overflow: 'hidden', opacity: isFuture ? 0.5 : 1 }}>
+                  <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: fill, background: ACCENT, borderRadius: 4, transition: 'height 0.3s ease' }} />
+                </div>
+                <span style={{ fontFamily: MONO, fontSize: 8.5, color: sel ? ACCENT : C.muted, fontWeight: sel ? 700 : 500 }}>{w}</span>
+              </button>
+            )
+          })}
         </div>
+
+        <div style={{ height: 1, background: C.hair, margin: '14px 0 12px' }} />
+        <span style={{ fontFamily: SERIF, fontSize: 13.5, fontStyle: 'italic', color: C.mid }}>
+          {pagesTotal} {pagesTotal === 1 ? 'morning' : 'mornings'} tended so far.
+        </span>
       </Card>
 
-      {/* ── Artist dates ── */}
-      <SectionLabel icon="feather">Artist dates</SectionLabel>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-        {artistDates.map((d, i) => (
-          <Card key={i} style={{ padding: '14px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 34, flexShrink: 0 }}>
-                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em', color: C.muted }}>WK</span>
-                <span style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, color: ACCENT, lineHeight: 1 }}>{d.week}</span>
-              </div>
-              <div style={{ width: 1, height: 30, background: C.hair, flexShrink: 0 }} />
-              <span style={{ fontFamily: SERIF, fontSize: 15.5, color: C.ink, lineHeight: 1.35, flex: 1 }}>{d.place}</span>
-              {d.done
-                ? <Icon name="check" size={16} stroke={ACCENT} sw={2.2} style={{ flexShrink: 0 }} />
-                : <MonoLabel>planned</MonoLabel>}
-            </div>
-          </Card>
-        ))}
-      </div>
+      {/* ── Selected week ── */}
+      <Card>
+        {/* week header with steppers */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <Stepper disabled={viewWeek <= 1} onClick={() => setSelWeek(Math.max(1, viewWeek - 1))} icon="chevL" />
+          <div style={{ textAlign: 'center' }}>
+            <span style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 500, color: C.ink }}>Week {viewWeek}</span>
+            {viewWeek === currentWeek && <MonoLabel color={ACCENT} style={{ display: 'block', marginTop: 2 }}>this week</MonoLabel>}
+          </div>
+          <Stepper disabled={viewWeek >= WEEK.total} onClick={() => setSelWeek(Math.min(WEEK.total, viewWeek + 1))} icon="chevR" />
+        </div>
 
-      {/* ── Exercises ── */}
-      <SectionLabel icon="pen">Exercises</SectionLabel>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {reflections.length === 0 && (
-          <Card style={{ padding: '18px' }}>
-            <p style={{ fontFamily: SERIF, fontSize: 14.5, fontStyle: 'italic', color: C.muted, textAlign: 'center' }}>Your answers will gather here as you go.</p>
-          </Card>
+        {future ? (
+          <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.muted, textAlign: 'center', padding: '8px 0' }}>
+            Week {viewWeek} is still ahead.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <Block label="Mood">{wMood ? <MoodChip mood={wMood} /> : dash}</Block>
+
+            <Block label="Morning pages">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <PagesStrip days={wPages} dot={9} />
+                <span style={{ fontFamily: SERIF, fontSize: 14, color: C.mid }}>{wPagesCount} / 7</span>
+              </div>
+            </Block>
+
+            <Block label="Artist date">
+              {wDate ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ flex: 1, fontFamily: SERIF, fontSize: 15.5, color: C.ink, lineHeight: 1.35 }}>{wDate.place}</span>
+                  {wDate.done
+                    ? <Icon name="check" size={16} stroke={ACCENT} sw={2.2} />
+                    : <MonoLabel>planned</MonoLabel>}
+                </div>
+              ) : dash}
+            </Block>
+
+            <Block label="Check-in">
+              {wCheckin && (wCheckin.lookingForward || wCheckin.shareText) ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {wCheckin.lookingForward && (
+                    <p style={{ fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5, margin: 0 }}>{wCheckin.lookingForward}</p>
+                  )}
+                  {wCheckin.shareText && (
+                    <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.mid, lineHeight: 1.5, margin: 0 }}>“{wCheckin.shareText}”</p>
+                  )}
+                </div>
+              ) : dash}
+            </Block>
+
+            <Block label={`Exercises${wRefs.length ? ` · ${wRefs.length}` : ''}`}>
+              {wRefs.length === 0 ? dash : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {wRefs.map((r) => (
+                    <button key={r.id} onClick={() => openDetail({
+                      kicker: `Week ${r.week} · exercise`, title: r.title, prompt: '',
+                      placeholder: 'your answer…', note: r.answer,
+                      save: (note) => saveReflection(r, note),
+                    })}
+                      style={{ textAlign: 'left', background: C.bg, border: `1px solid ${C.hair}`, borderRadius: 11, padding: '12px 14px', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                        <span style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 500, color: C.ink, lineHeight: 1.3 }}>{r.title}</span>
+                        <Icon name="chevR" size={15} stroke={C.edge} style={{ flexShrink: 0 }} />
+                      </div>
+                      <p style={{ fontFamily: SERIF, fontSize: 14, fontStyle: 'italic', color: C.mid, lineHeight: 1.5, margin: '6px 0 0',
+                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.answer}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Block>
+          </div>
         )}
-        {reflections.map((r) => (
-          <Card key={r.week + '-' + r.id} onClick={() => openDetail({
-            kicker: `Week ${r.week} · exercise`, title: r.title, prompt: '',
-            placeholder: 'your answer…', note: r.answer,
-            save: (note) => {
-              if (r.live) setMe((m) => ({ ...m, exerciseNotes: { ...m.exerciseNotes, [r.id]: note } }))
-              else setMe((m) => ({ ...m, pastEdits: { ...m.pastEdits, [r.id]: note } }))
-            },
-          })}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-              <MonoLabel>Week {r.week}{r.live ? ' · this week' : ''}</MonoLabel>
-              <Icon name="chevR" size={15} stroke={C.edge} />
-            </div>
-            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: C.ink, lineHeight: 1.3, marginBottom: 6 }}>{r.title}</div>
-            <p style={{ fontFamily: SERIF, fontSize: 14.5, fontStyle: 'italic', color: C.mid, lineHeight: 1.5,
-              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.answer}</p>
-          </Card>
-        ))}
-      </div>
+      </Card>
     </div>
+  )
+}
+
+const ACCENT_RING = 'rgba(138,94,126,0.22)'
+
+function Stepper({ disabled, onClick, icon }) {
+  return (
+    <button onClick={onClick} disabled={disabled}
+      style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, border: `1px solid ${C.edge}`, background: C.bg,
+        cursor: disabled ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        opacity: disabled ? 0.4 : 1, WebkitTapHighlightColor: 'transparent' }}>
+      <Icon name={icon} size={19} stroke={ACCENT} sw={2} />
+    </button>
   )
 }

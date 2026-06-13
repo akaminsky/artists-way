@@ -67,13 +67,15 @@ export function Checkbox({ checked, onClick, size = 28 }) {
   )
 }
 
-// 7-day pages strip; today gets a ring
-export function PagesStrip({ days, todayIndex = -1, letters, dot = 9, gap = 7, interactive = false, onToggle }) {
+// 7-day pages strip; today gets a ring. When interactive, days up to maxIndex are
+// tappable (to log/un-log that day); later days are locked + dimmed.
+export function PagesStrip({ days, todayIndex = -1, letters, dot = 9, gap = 7, interactive = false, onToggle, maxIndex = 6 }) {
   const L = letters || ['M', 'T', 'W', 'T', 'F', 'S', 'S']
   return (
     <div style={{ display: 'flex', gap }}>
       {days.map((on, i) => {
         const isToday = i === todayIndex
+        const locked = i > maxIndex
         const node = (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
             <span style={{
@@ -86,9 +88,10 @@ export function PagesStrip({ days, todayIndex = -1, letters, dot = 9, gap = 7, i
             {letters && <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.06em', color: isToday ? ACCENT : C.muted, fontWeight: isToday ? 600 : 500 }}>{L[i]}</span>}
           </div>
         )
-        return interactive
-          ? <button key={i} onClick={(e) => { e.stopPropagation(); onToggle && onToggle(i) }} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>{node}</button>
-          : <div key={i}>{node}</div>
+        return interactive && !locked
+          ? <button key={i} onClick={(e) => { e.stopPropagation(); onToggle && onToggle(i) }}
+              style={{ background: 'none', border: 'none', padding: '5px 3px', margin: '-5px -3px', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>{node}</button>
+          : <div key={i} style={locked ? { opacity: 0.4 } : undefined}>{node}</div>
       })}
     </div>
   )

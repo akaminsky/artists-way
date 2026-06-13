@@ -18,3 +18,7 @@ npm-debug.log*
 .env
 .env.local
 .env.*.local
+
+# source task images (third-party / copyrighted) — used to seed the catalog
+# locally; not for publishing. The extracted prompts live in supabase/.
+exercises/
