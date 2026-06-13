@@ -23,8 +23,11 @@ export function dayOfWeek(startedOn, today = new Date()) {
   return ((days % 7) + 7) % 7
 }
 
-// ── Calendar-week helpers (the Mon–Sun strip on Today) ──
-// Local-time based, so "today" matches what the user sees on their phone.
+// ── Calendar-week helpers (the Sun–Sat strip on Today) ──
+// Weeks run SUNDAY→SATURDAY for everyone. Because we also anchor each member's
+// `started_on` to a Sunday (see sundayOf / startedOnForWeek + the DB default),
+// the program week and the calendar week are the same Sun–Sat window — so
+// "this week" means the same thing on Today, Circle, and You. Local-time based.
 
 // 'YYYY-MM-DD' in local time (morning_pages.date is a plain date).
 export function isoDate(d = new Date()) {
@@ -34,18 +37,18 @@ export function isoDate(d = new Date()) {
   return `${y}-${m}-${day}`
 }
 
-// Index of today within a Mon-first week: Mon = 0 … Sun = 6.
-export function weekdayIndexMon(today = new Date()) {
-  return (today.getDay() + 6) % 7
+// Index of today within a Sunday-first week: Sun = 0 … Sat = 6.
+export function weekdayIndex(today = new Date()) {
+  return today.getDay()
 }
 
-// The 7 ISO dates of the Mon–Sun week containing `today`.
+// The 7 ISO dates of the Sun–Sat week containing `today`.
 export function currentWeekDates(today = new Date()) {
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - weekdayIndexMon(today))
+  const sunday = new Date(today)
+  sunday.setDate(today.getDate() - today.getDay())
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
+    const d = new Date(sunday)
+    d.setDate(sunday.getDate() + i)
     return isoDate(d)
   })
 }
@@ -55,6 +58,19 @@ export function addDays(date, n) {
   const d = new Date(date)
   d.setDate(d.getDate() + n)
   return d
+}
+
+// The Sunday on or before `date` (the start of its calendar week).
+export function sundayOf(date = new Date()) {
+  return addDays(date, -date.getDay())
+}
+
+// The started_on ('YYYY-MM-DD') that puts you on week `n` as of `ref`, anchored
+// to a Sunday so program weeks line up with calendar weeks. Used by "set my
+// week" and resume-from-pause.
+export function startedOnForWeek(n, ref = new Date()) {
+  const clamped = Math.min(TOTAL_WEEKS, Math.max(1, n))
+  return isoDate(addDays(sundayOf(ref), -(clamped - 1) * 7))
 }
 
 // A member's program week, honoring a pause. When pausedOn is set the week is

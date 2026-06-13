@@ -241,11 +241,16 @@ src/
   drift apart. Week is per-user, not per-cohort.
 - **Week is derived from a start date** (resolved session 2). Each membership
   stores `started_on`; `current_week = clamp(1,12, floor((ref−started_on)/7)+1)`
-  via `src/lib/week.js`. UPDATE (session 3): the Profile screen now lets you
-  **set your week** (rewrites `started_on`) and **pause/resume** (a `paused_at`
-  date freezes the week; resume shifts `started_on` by the paused span). `ref` =
-  `paused_at || today` (see `memberWeek`). This addressed the old "week keeps
-  ticking even if you fall behind" worry — you can pause or dial it back.
+  via `src/lib/week.js`. UPDATE (session 3): Profile lets you **set your week**
+  and **pause/resume** (`paused_at` freezes the week; `ref = paused_at || today`).
+  UPDATE (session 3, late): **weeks run SUNDAY→SATURDAY for everyone.**
+  `started_on` is anchored to a Sunday (DB default `current_date - dow`; app
+  helpers `sundayOf`/`startedOnForWeek` for set-week + resume), so each person's
+  PROGRAM week == the Sun–Sat CALENDAR week. This fixed a real inconsistency
+  where Today/Circle counted morning pages by calendar week but You bucketed by
+  program week — now all three count the same 7 days. `currentWeekDates` +
+  `weekdayIndex` are Sunday-first; `DAY_LETTERS` = S M T W T F S. Resume
+  re-anchors to the frozen week (Sunday-aligned) rather than shifting by raw days.
 - **Seed all 12 weeks of exercises up front** (resolved session 2). UPDATE
   (session 3, late): the catalog is now **GLOBAL** (migration `0007`) — one
   shared set for every cohort, not cohort-scoped, and **seeded once** via

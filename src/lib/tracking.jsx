@@ -11,7 +11,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase, isConfigured } from './supabase'
 import { useAuth } from './auth'
 import { useCohort } from './cohort'
-import { memberWeek, currentWeekDates, weekdayIndexMon } from './week'
+import { memberWeek, currentWeekDates, weekdayIndex } from './week'
 
 export function useTracking() {
   const { session } = useAuth()
@@ -24,7 +24,7 @@ export function useTracking() {
 
   const week = memberWeek(startedOn, pausedOn)
   const weekDates = currentWeekDates()
-  const todayIndex = weekdayIndexMon()
+  const todayIndex = weekdayIndex()
   const todayISO = weekDates[todayIndex]
 
   const [loading, setLoading] = useState(true)
@@ -91,7 +91,7 @@ export function useTracking() {
     if (!active) return
     const dates = currentWeekDates()
     const dateISO = dates[index]
-    if (!dateISO || index > weekdayIndexMon()) return
+    if (!dateISO || index > weekdayIndex()) return
     const has = doneDates.has(dateISO)
     setDoneDates((prev) => {
       const next = new Set(prev)

@@ -2,7 +2,7 @@
 import { C, SERIF, ACCENT, ACCENT_SOFT } from '../lib/theme'
 import { Icon, MonoLabel, Checkbox, PagesStrip } from '../components/primitives'
 import { WEEK, DATE, DAY_LETTERS, EXERCISES } from '../data/seed'
-import { weekdayIndexMon } from '../lib/week'
+import { weekdayIndex } from '../lib/week'
 
 export default function Today({ me, setMe, track, name, openDetail, openCheckin, openIdeas }) {
   // Morning Pages + Artist Date read/write the backend when it's live (`track`);
@@ -65,7 +65,8 @@ export default function Today({ me, setMe, track, name, openDetail, openCheckin,
   const checkedIn = t
     ? Boolean(t.checkin && (t.checkin.mood || t.checkin.looking_forward || t.checkin.share_text))
     : Boolean(me.checkin.shared)
-  const showCheckinNudge = Boolean(openCheckin) && weekdayIndexMon() >= 4 && !checkedIn
+  // Thu–Sat (Sunday-first index 4–6), as Sunday's call approaches
+  const showCheckinNudge = Boolean(openCheckin) && weekdayIndex() >= 4 && !checkedIn
 
   const Card = ({ children, onClick, style = {} }) => (
     <div onClick={onClick} style={{
@@ -169,7 +170,7 @@ export default function Today({ me, setMe, track, name, openDetail, openCheckin,
         </p>
         {exItems.length === 0 ? (
           <p style={{ fontFamily: SERIF, fontSize: 14.5, fontStyle: 'italic', color: C.muted, margin: '12px 0 2px', lineHeight: 1.45 }}>
-            No exercises set for this week yet.
+            {t && t.loading ? 'Gathering this week’s work…' : 'No exercises set for this week yet.'}
           </p>
         ) : (
           <div style={{ marginTop: 8 }}>

@@ -85,7 +85,7 @@ export const JOURNEY = {
 
 export const WEEK = { n: 4, total: 12, title: 'Recovering a Sense of Integrity' };
 export const DATE = { weekday: 'Thursday', day: 'June 11', dayShort: 'Thu' };
-export const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+export const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']; // Sunday-first
 
 export const seed = { MOODS, moodByKey, EXERCISES, FRIENDS, ME, JOURNEY, WEEK, DATE, DAY_LETTERS, IDEAS };
 export default seed;

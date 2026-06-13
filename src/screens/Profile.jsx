@@ -7,7 +7,7 @@ import { C, SERIF, SANS, MONO, ACCENT, ACCENT_SOFT } from '../lib/theme'
 import { Icon, MonoLabel, Avatar } from '../components/primitives'
 import { useAuth } from '../lib/auth'
 import { useCohort } from '../lib/cohort'
-import { isoDate, addDays, memberWeek, TOTAL_WEEKS } from '../lib/week'
+import { isoDate, memberWeek, startedOnForWeek, TOTAL_WEEKS } from '../lib/week'
 import { inviteUrl } from '../lib/invite'
 
 const RED = '#B5645C'
@@ -29,7 +29,6 @@ export default function Profile({ onBack }) {
 
   const paused = Boolean(membership?.paused_at)
   const today = new Date()
-  const refDate = paused ? new Date(membership.paused_at + 'T00:00:00') : today
   const week = memberWeek(membership?.started_on, membership?.paused_at)
 
   const saveName = async () => {
@@ -41,23 +40,18 @@ export default function Profile({ onBack }) {
     setNameSaved(true); setTimeout(() => setNameSaved(false), 1600)
   }
 
-  // Set which week you're on by rewriting started_on relative to the reference
-  // date (today, or the pause date while paused).
+  // Set which week you're on by rewriting started_on, anchored to a Sunday so
+  // program weeks stay aligned with the Sun–Sat calendar week.
   const setWeek = (n) => {
-    const clamped = Math.min(TOTAL_WEEKS, Math.max(1, n))
-    if (clamped === week) return
-    updateMembership({ started_on: isoDate(addDays(refDate, -(clamped - 1) * 7)) })
+    if (n === week) return
+    updateMembership({ started_on: startedOnForWeek(n, today) })
   }
 
   const pause = () => updateMembership({ paused_at: isoDate(today) })
 
-  const resume = () => {
-    const todayMid = new Date(isoDate(today) + 'T00:00:00')
-    const pausedDate = new Date(membership.paused_at + 'T00:00:00')
-    const daysPaused = Math.max(0, Math.round((todayMid - pausedDate) / 86400000))
-    const newStart = isoDate(addDays(new Date(membership.started_on + 'T00:00:00'), daysPaused))
-    updateMembership({ started_on: newStart, paused_at: null })
-  }
+  // Resume = re-anchor started_on so you land back on the week you froze at
+  // (`week` is the frozen week while paused), still Sunday-aligned.
+  const resume = () => updateMembership({ started_on: startedOnForWeek(week, today), paused_at: null })
 
   const copyLink = async () => {
     try {
@@ -128,7 +122,7 @@ export default function Profile({ onBack }) {
             <Stepper disabled={week >= TOTAL_WEEKS || paused} onClick={() => setWeek(week + 1)} icon="chevR" />
           </div>
           <p style={{ fontFamily: SERIF, fontSize: 13.5, fontStyle: 'italic', color: C.muted, margin: '14px 0 0', lineHeight: 1.45, textAlign: 'center' }}>
-            {paused ? 'Resume to change your week.' : 'Sets which week’s exercises and artist date you see.'}
+            {paused ? 'Resume to change your week.' : 'Sets which week’s exercises and artist date you see. Weeks run Sunday to Saturday.'}
           </p>
         </div>
 
