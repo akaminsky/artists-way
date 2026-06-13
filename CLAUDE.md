@@ -11,10 +11,16 @@ This is a personal passion project, not a business. Scope decisions should favor
 
 ## ⟶ RESUME HERE (next session)
 
-Where we left off (session 3, June 13 2026): the **whole app now runs on
-Supabase** (all six build-order steps + the Journey migration + a Profile screen),
-THEN a **navigation/IA redesign** (5 tabs → 3: Today · Circle · You) and a
-**You-page by-week redesign**. See the "Navigation (session 3 redesign)" section.
+Where we left off (session 3, June 13–14 2026): the app is **renamed `meraki`,
+fully on Supabase, redesigned (3 tabs), and DEPLOYED LIVE.** This session: built
+the whole backend (steps 2–6 + Journey + Profile), did the IA redesign (5→3 tabs:
+Today · Circle · You) + You-page by-week redesign, **deployed to GitHub Pages**,
+renamed tend→meraki, **wiped the DB of all test data**, made the **exercise
+catalog global**, and added **Sunday-anchored weeks** + **per-week Spotify
+audiobook links**. App is empty of users/cohorts (clean slate) but the global
+catalog is pre-seeded and waiting for kickoff.
+
+**LIVE AT: `https://alexakaminsky.com/artists-way/`** (GitHub Pages custom domain).
 
 Live backend facts:
 - Supabase project **project_ref `izdjwmulgneyoxrpddlj`**; MCP authenticated.
@@ -25,7 +31,9 @@ Live backend facts:
   dropped `exercises.cohort_id`; one shared 12-week set for every cohort; reads
   open to authenticated, writes seed-only), `0008` (`cohorts.created_by` made
   nullable — fixed a NOT-NULL vs `on delete set null` contradiction that errored
-  when a cohort creator's account was deleted). The `0001` ledger gap is cosmetic.
+  when a cohort creator's account was deleted), `0009` (**started_on defaults to
+  the Sunday on/before join** — `current_date - dow` — so weeks run Sun–Sat for
+  everyone). The `0001` ledger gap is cosmetic.
 - Exercise catalog is **global + already seeded** (103 rows, all 12 weeks) via
   `supabase/seed_exercises.sql` (re-runnable; upserts on `(week, sort)` so it
   never deletes progress). No per-cohort re-seeding — new circles inherit it.
@@ -33,19 +41,37 @@ Live backend facts:
   only the catalog (prompts) is global. App queries select exercises by `week`
   only (no cohort filter). Source images live in `exercises/` which is
   **gitignored** (third-party material — not committed/published).
-- `.env.local` is filled (URL + legacy anon key) so the app runs in backend
-  mode. Auth URL config done in the dashboard: Site URL + redirect
-  `http://localhost:5173/**`. Add the prod domain there too when we deploy.
+- `.env.local` is filled (URL + legacy anon key) for local dev. Prod build gets
+  the same vars from **GitHub Actions secrets** (`VITE_SUPABASE_URL`,
+  `VITE_SUPABASE_ANON_KEY`). Auth URL config (Supabase → Auth → URL
+  Configuration): redirect allow-list includes `http://localhost:5173/**` AND
+  `https://alexakaminsky.com/artists-way/**` (the prod custom domain; the
+  github.io URL 301s to it). `appBaseUrl()` derives the served URL so invite
+  links + magic-link redirect respect the subpath.
 
-**Where things stand — feature-complete + redesigned for kickoff.** Remaining/optional:
-1. Push notifications (step 7) — fiddly, optional, don't let it block anything.
-2. Editing PAST check-ins from You (editor only targets the current week now);
-   avatar/timezone in Profile; cross-week morning-pages backfill.
-3. Deploy + hosting decision (see Open questions) and buy/point a domain.
-Before kickoff: have each friend set their real name + week in Profile.
+**Deploy:** `.github/workflows/deploy.yml` builds on push to `main` → GitHub
+Pages. Repo is public, Pages source = GitHub Actions. PROD = the custom domain
+above. Icon is `m.` (regenerated from `public/favicon.svg`).
 
-Note: `.env.local` is for the *running app*; the MCP is for *us* to manage the
-DB. Both point at the same project.
+**⚑ NEXT SESSION — the one real pre-kickoff TODO: custom SMTP for email.** The
+magic-link email still uses Supabase's default shared SMTP (rate-limited to a
+few/hour, lands in spam). Before 5 friends sign in at kickoff, set up custom SMTP
+(Supabase → Auth → SMTP) via Resend or Postmark + verify `alexakaminsky.com`
+(DNS records). Also (optional, 2 min): brand the magic-link **email template**
+(Auth → Email Templates → Magic Link) — drafted meraki copy is in the session
+chat. The in-app sign-in screen + wordmark already say meraki.
+
+Other remaining/optional (none blocking):
+- Open signup (`shouldCreateUser` default true) — anyone with the URL can make an
+  account; RLS isolates data. Lock to known emails if wanted.
+- Leaving a circle orphans your rows (not deleted); editing PAST check-ins from
+  You isn't wired (editor targets current week); avatar/timezone in Profile;
+  cross-week morning-pages backfill; push notifications (step 7).
+- A real **meraki app icon** (current `m.` is a serif letter on parchment).
+
+**At kickoff:** each friend opens the live URL → magic-link sign in → first person
+creates the circle, others join via the invite link → everyone sets their name +
+week in Profile. The week-1 exercises + Spotify chapter link are already there.
 
 ## Current state
 
