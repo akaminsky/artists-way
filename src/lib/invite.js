@@ -35,6 +35,15 @@ export function clearPendingInvite() {
   try { localStorage.removeItem(PENDING_KEY) } catch (e) { /* ignore */ }
 }
 
+// The URL the app is actually served from — origin + the directory of the
+// current page. This keeps invite links and the magic-link redirect correct on
+// a GitHub Pages subpath (e.g. /artists-way/) AND on a custom domain at root,
+// where bare window.location.origin would drop the subpath.
+export function appBaseUrl() {
+  const dir = window.location.pathname.replace(/[^/]*$/, '') // strip filename, keep trailing slash
+  return window.location.origin + dir
+}
+
 export function inviteUrl(code) {
-  return `${window.location.origin}/?join=${encodeURIComponent(code)}`
+  return `${appBaseUrl()}?join=${encodeURIComponent(code)}`
 }

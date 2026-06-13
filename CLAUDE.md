@@ -317,8 +317,17 @@ through `memberships`.
 - **Linking a done idea to Artist Date history:** checking off an idea in the
   library could auto-create an entry in You → Artist Dates. Cleaner to wire once
   the backend exists.
-- **Hosting:** GitHub Pages (like the other `.github.io` projects) serves the
-  static frontend fine; Supabase is the backend. Confirm where to deploy.
+- **Hosting:** RESOLVED — GitHub Pages. `.github/workflows/deploy.yml` builds on
+  push to `main` and publishes `dist/` to Pages (base is `./` in vite.config, so
+  the subpath `https://akaminsky.github.io/artists-way/` works; no router → no SPA
+  404 issue). `appBaseUrl()` in `src/lib/invite.js` derives the served URL
+  (origin + dir) so invite links + the magic-link `emailRedirectTo` respect the
+  subpath. **Manual one-time steps to go live:** (1) add repo secrets
+  `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (Settings → Secrets → Actions);
+  (2) Settings → Pages → source = GitHub Actions; (3) repo must be public (or
+  Pro); (4) add `https://akaminsky.github.io/artists-way/**` to Supabase Auth →
+  URL Configuration (Site URL + redirect). Custom domain later = set CNAME +
+  add that URL to the Supabase allowlist; no code change (appBaseUrl handles it).
 - **Reactions on shared wins:** add a tiny acknowledgment or keep fully quiet.
 
 ## People in the prototype (placeholders)

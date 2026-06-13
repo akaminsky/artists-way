@@ -5,6 +5,7 @@
 // to the local prototype.
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase, isConfigured } from './supabase'
+import { appBaseUrl } from './invite'
 
 const AuthContext = createContext(null)
 
@@ -56,7 +57,7 @@ export function AuthProvider({ children }) {
     if (!isConfigured) throw new Error('Supabase not configured')
     return supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: appBaseUrl() },
     })
   }, [])
 
