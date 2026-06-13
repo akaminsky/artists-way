@@ -92,7 +92,7 @@ export default function Onboarding() {
         padding: '0 30px', maxWidth: 440, width: '100%', margin: '0 auto',
       }}>
         <span style={{ fontFamily: SERIF, fontSize: 34, fontWeight: 500, color: C.ink, letterSpacing: '-0.01em' }}>
-          tend<span style={{ color: ACCENT }}>.</span>
+          meraki<span style={{ color: ACCENT }}>.</span>
         </span>
 
         {/* ── Choose a door ─────────────────────────────── */}
@@ -193,7 +193,7 @@ export default function Onboarding() {
               {copied ? 'Link copied ✓' : 'Copy invite link'}
             </button>
             <button onClick={enterApp} style={{ ...linkBtn, alignSelf: 'center', fontSize: 15 }}>
-              Continue to tend →
+              Continue to meraki →
             </button>
           </>
         )}

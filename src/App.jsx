@@ -40,7 +40,7 @@ function Splash() {
   return (
     <div className="app-frame" style={{ alignItems: 'center', justifyContent: 'center' }}>
       <span style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 500, color: C.muted }}>
-        tend<span style={{ color: ACCENT }}>.</span>
+        meraki<span style={{ color: ACCENT }}>.</span>
       </span>
     </div>
   )
@@ -119,7 +119,7 @@ export default function App() {
         padding: 'calc(env(safe-area-inset-top) + 14px) 22px 12px', flexShrink: 0,
       }}>
         <span style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 500, color: C.ink, letterSpacing: '-0.01em' }}>
-          tend<span style={{ color: ACCENT }}>.</span>
+          meraki<span style={{ color: ACCENT }}>.</span>
         </span>
         {/* Right cluster: the week pill (your week — only on your own screens;
             on Circle each person shows their own week per card) + account chip. */}

@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'tend — Artist’s Way circle',
-        short_name: 'tend',
+        name: 'meraki — Artist’s Way circle',
+        short_name: 'meraki',
         description: 'A calm, private companion for the weekly Artist’s Way practice.',
         theme_color: '#F3EDE2',
         background_color: '#F3EDE2',

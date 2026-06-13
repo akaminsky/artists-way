@@ -36,14 +36,20 @@ export default function SignIn() {
         padding: '0 30px', maxWidth: 440, width: '100%', margin: '0 auto',
       }}>
         <span style={{ fontFamily: SERIF, fontSize: 34, fontWeight: 500, color: C.ink, letterSpacing: '-0.01em' }}>
-          tend<span style={{ color: ACCENT }}>.</span>
+          meraki<span style={{ color: ACCENT }}>.</span>
         </span>
 
         {!sent ? (
           <>
-            <p style={{ fontFamily: SERIF, fontSize: 16.5, fontStyle: 'italic', color: C.mid, lineHeight: 1.5, margin: '14px 0 30px' }}>
-              Twelve weeks, five friends, finished together. Enter your email and
-              we’ll send a link to sign in — no password to remember.
+            <p style={{ fontFamily: SERIF, fontSize: 16.5, fontStyle: 'italic', color: C.mid, lineHeight: 1.55, margin: '14px 0 16px' }}>
+              A Greek word for doing something with soul, creativity, or love —
+              putting a piece of yourself into your work, and acting with passion
+              and devotion.
+            </p>
+            <p style={{ fontFamily: SERIF, fontSize: 16.5, fontStyle: 'italic', color: C.mid, lineHeight: 1.55, margin: '0 0 30px' }}>
+              That’s the spirit of twelve weeks of The Artist’s Way, walked
+              together. Enter your email and we’ll send a link to sign in — no
+              password to remember.
             </p>
 
             <form onSubmit={send} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
