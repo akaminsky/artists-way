@@ -124,12 +124,12 @@ export default function Group({ me, openCheckin, goToYou }) {
   return (
     <div style={{ padding: '6px 20px 24px' }}>
       <div style={{ padding: '6px 2px 16px' }}>
-        <MonoLabel>The circle · {people.length} {people.length === 1 ? 'friend' : 'friends'}</MonoLabel>
+        <MonoLabel>{people.length} {people.length === 1 ? 'friend' : 'friends'}</MonoLabel>
         <h1 style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 500, color: C.ink, lineHeight: 1.2, margin: '8px 0 0' }}>
-          How everyone’s tending
+          Your circle
         </h1>
         <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.mid, marginTop: 6 }}>
-          No scores, no nudges — just so you can hold each other.
+          Where everyone is this week.
         </p>
       </div>
 
