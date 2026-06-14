@@ -4,11 +4,9 @@
 // morning pages, artist date, check-in, exercise answers). One week at a time.
 import { useState } from 'react'
 import { C, SERIF, MONO, ACCENT } from '../lib/theme'
-import { Icon, MonoLabel, MoodChip, PagesStrip } from '../components/primitives'
+import { Icon, MonoLabel, MoodChip } from '../components/primitives'
 import { WEEK, JOURNEY, EXERCISES, moodByKey } from '../data/seed'
 import { useJourney } from '../lib/journey'
-
-const EMPTY_WEEK = [false, false, false, false, false, false, false]
 
 export default function Journey({ me, setMe, notes, openDetail }) {
   const j = useJourney()
@@ -49,7 +47,6 @@ export default function Journey({ me, setMe, notes, openDetail }) {
   }
 
   const pagesByWeek = backend ? j.pagesByWeek : { [currentWeek]: me.pages.filter(Boolean).length }
-  const pagesDaysByWeek = backend ? j.pagesDays : { [currentWeek]: me.pages }
   const pagesTotal = backend ? j.pagesTotal : me.pages.filter(Boolean).length
   const checkins = backend
     ? j.checkins
@@ -59,7 +56,6 @@ export default function Journey({ me, setMe, notes, openDetail }) {
 
   // ── the selected week's pieces ──
   const wMood = moodByKey(moodForWeek(viewWeek))
-  const wPages = pagesDaysByWeek[viewWeek] || EMPTY_WEEK
   const wPagesCount = pagesByWeek[viewWeek] || 0
   const wDate = artistDates.find((d) => d.week === viewWeek)
   const wCheckin = checkins.find((c) => c.week === viewWeek)
@@ -86,12 +82,12 @@ export default function Journey({ me, setMe, notes, openDetail }) {
     <div style={{ padding: '6px 20px 24px' }}>
       {/* title */}
       <div style={{ padding: '6px 2px 16px' }}>
-        <MonoLabel>Your journey · week {currentWeek} of {WEEK.total}</MonoLabel>
+        <MonoLabel>Week {currentWeek} of {WEEK.total}</MonoLabel>
         <h1 style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 500, color: C.ink, lineHeight: 1.2, margin: '8px 0 0' }}>
-          Looking back
+          Your journey
         </h1>
         <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.mid, marginTop: 6 }}>
-          The trail you’ve left for future-you.
+          One week at a time.
         </p>
       </div>
 
@@ -168,14 +164,11 @@ export default function Journey({ me, setMe, notes, openDetail }) {
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <Block label="Mood">{wMood ? <MoodChip mood={wMood} /> : dash}</Block>
-
-            <Block label="Morning pages">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <PagesStrip days={wPages} dot={9} />
-                <span style={{ fontFamily: SERIF, fontSize: 14, color: C.mid }}>{wPagesCount} / 7</span>
-              </div>
-            </Block>
+            {/* compact summary: the numbers already live in the overview above */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginTop: -2 }}>
+              {wMood && <MoodChip mood={wMood} />}
+              <span style={{ fontFamily: SERIF, fontSize: 13.5, color: C.mid }}>{wPagesCount}/7 pages</span>
+            </div>
 
             <Block label="Artist date">
               {wDate ? (
