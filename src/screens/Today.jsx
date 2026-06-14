@@ -4,6 +4,7 @@ import { C, SERIF, ACCENT, ACCENT_SOFT } from '../lib/theme'
 import { Icon, MonoLabel, Checkbox, PagesStrip } from '../components/primitives'
 import { WEEK, DAY_LETTERS, EXERCISES } from '../data/seed'
 import { audioForWeek } from '../data/chapters'
+import { themeForWeek } from '../data/weeks'
 import { weekdayIndex } from '../lib/week'
 
 const noteStamp = (iso) => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
@@ -31,7 +32,6 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
   // otherwise they fall back to the local prototype `me`. Exercises are still on
   // `me` — they migrate in the next sub-step (they need the cohort catalog).
   const t = track && track.ready ? track : null
-  const displayName = name || me.name
 
   // Morning Pages
   const pages = t ? t.pages : me.pages
@@ -103,15 +103,24 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
 
   return (
     <div style={{ padding: '6px 20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Title block */}
+      {/* Week header: the week + its theme, with a one-line progress glance */}
       <div style={{ padding: '6px 2px 2px' }}>
         <MonoLabel>{new Date().toLocaleDateString(undefined, { weekday: 'long' })} · {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}</MonoLabel>
-        <h1 style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 500, color: C.ink, lineHeight: 1.2, margin: '8px 0 0' }}>
-          Good morning, {displayName}.
+        <h1 style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 500, color: C.ink, lineHeight: 1.15, margin: '8px 0 0' }}>
+          Week {exWeek}
         </h1>
-        <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.mid, marginTop: 6 }}>
-          A quiet page is waiting.
-        </p>
+        {themeForWeek(exWeek) && (
+          <p style={{ fontFamily: SERIF, fontSize: 16, fontStyle: 'italic', color: C.mid, margin: '5px 0 0', lineHeight: 1.35 }}>
+            {themeForWeek(exWeek)}
+          </p>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 13, fontFamily: SERIF, fontSize: 13.5, color: C.mid }}>
+          <span>{pagesDone}/7 pages</span>
+          <span style={{ color: C.edge }}>·</span>
+          <span>artist date {adDone ? '✓' : '○'}</span>
+          <span style={{ color: C.edge }}>·</span>
+          <span>{exItems.length ? `${exDone}/${exItems.length} exercises` : 'exercises —'}</span>
+        </div>
       </div>
 
       {/* Morning Pages — just a checkbox, no writing */}
@@ -138,20 +147,50 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
         )}
       </Card>
 
-      {/* Listen to this week's chapter (Spotify audiobook) */}
-      {audioForWeek(exWeek) && (
-        <a href={audioForWeek(exWeek)} target="_blank" rel="noopener noreferrer"
-          style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none',
-            background: C.card, borderRadius: 14, boxShadow: '0 6px 20px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.05)',
-            padding: '14px 18px', WebkitTapHighlightColor: 'transparent' }}>
-          <Icon name="headphones" size={20} stroke={ACCENT} sw={1.7} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 500, color: C.ink }}>Listen to this week’s chapter</div>
-            <div style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.mid, marginTop: 2 }}>The Artist’s Way on Spotify</div>
-          </div>
-          <Icon name="arrow" size={16} stroke={C.edge} style={{ flexShrink: 0 }} />
-        </a>
-      )}
+      {/* This week's exercises — with a "listen to the chapter" affordance */}
+      <Card>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <CardTitle icon="leaf">This week’s exercises</CardTitle>
+          {audioForWeek(exWeek) && (
+            <a href={audioForWeek(exWeek)} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, textDecoration: 'none', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
+              <Icon name="headphones" size={15} stroke={ACCENT} sw={1.7} />
+              <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: ACCENT, whiteSpace: 'nowrap' }}>listen</span>
+            </a>
+          )}
+        </div>
+        {exItems.length === 0 ? (
+          <p style={{ fontFamily: SERIF, fontSize: 14.5, fontStyle: 'italic', color: C.muted, margin: '10px 0 2px', lineHeight: 1.45 }}>
+            {t && t.loading ? 'Gathering this week’s work…' : 'No exercises set for this week yet.'}
+          </p>
+        ) : (
+          <>
+            <p style={{ fontFamily: SERIF, fontSize: 13.5, fontStyle: 'italic', color: C.mid, margin: '7px 0 4px' }}>
+              {exDone} of {exItems.length} done.
+            </p>
+            <div style={{ marginTop: 8 }}>
+              {exItems.map((ex, i) => {
+                const done = ex.done
+                return (
+                  <div key={ex.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '9px 0', borderTop: i === 0 ? 'none' : `1px solid ${C.hair}` }}>
+                    <Checkbox checked={done} onClick={() => toggleEx(ex.id)} size={22} />
+                    <button onClick={() => openDetail({
+                      kicker: `Week ${exWeek} · exercise ${i + 1}`, title: ex.label, prompt: ex.prompt,
+                      placeholder: 'work it out here…', note: ex.answer || '',
+                      save: (note) => saveExAnswer(ex.id, note),
+                    })}
+                      style={{ flex: 1, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}>
+                      <span style={{ fontFamily: SERIF, fontSize: 15.5, lineHeight: 1.35, color: done ? C.muted : C.ink, textDecoration: done ? 'line-through' : 'none', textDecorationColor: 'rgba(154,145,131,0.6)' }}>{ex.label}</span>
+                    </button>
+                    {ex.answer && <Icon name="pen" size={13} stroke={C.muted} style={{ flexShrink: 0 }} />}
+                    <Icon name="chevR" size={15} stroke={C.edge} style={{ flexShrink: 0 }} />
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </Card>
 
       {/* Artist Date */}
       <Card onClick={() => openDetail({
@@ -182,43 +221,6 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
             <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: ACCENT, whiteSpace: 'nowrap' }}>browse ideas</span>
           </button>
         </div>
-      </Card>
-
-      {/* This week's work */}
-      <Card>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <CardTitle icon="leaf">This week’s exercises</CardTitle>
-          <MonoLabel>{exDone} / {exItems.length}</MonoLabel>
-        </div>
-        <p style={{ fontFamily: SERIF, fontSize: 13.5, fontStyle: 'italic', color: C.mid, margin: '7px 0 4px' }}>
-          Week {exWeek}{!t ? ` — ${WEEK.title}` : ''}.
-        </p>
-        {exItems.length === 0 ? (
-          <p style={{ fontFamily: SERIF, fontSize: 14.5, fontStyle: 'italic', color: C.muted, margin: '12px 0 2px', lineHeight: 1.45 }}>
-            {t && t.loading ? 'Gathering this week’s work…' : 'No exercises set for this week yet.'}
-          </p>
-        ) : (
-          <div style={{ marginTop: 8 }}>
-            {exItems.map((ex, i) => {
-              const done = ex.done
-              return (
-                <div key={ex.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '9px 0', borderTop: i === 0 ? 'none' : `1px solid ${C.hair}` }}>
-                  <Checkbox checked={done} onClick={() => toggleEx(ex.id)} size={22} />
-                  <button onClick={() => openDetail({
-                    kicker: `Week ${exWeek} · exercise ${i + 1}`, title: ex.label, prompt: ex.prompt,
-                    placeholder: 'work it out here…', note: ex.answer || '',
-                    save: (note) => saveExAnswer(ex.id, note),
-                  })}
-                    style={{ flex: 1, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}>
-                    <span style={{ fontFamily: SERIF, fontSize: 15.5, lineHeight: 1.35, color: done ? C.muted : C.ink, textDecoration: done ? 'line-through' : 'none', textDecorationColor: 'rgba(154,145,131,0.6)' }}>{ex.label}</span>
-                  </button>
-                  {ex.answer && <Icon name="pen" size={13} stroke={C.muted} style={{ flexShrink: 0 }} />}
-                  <Icon name="chevR" size={15} stroke={C.edge} style={{ flexShrink: 0 }} />
-                </div>
-              )
-            })}
-          </div>
-        )}
       </Card>
 
       {/* Notes — a private running journal for the week */}
