@@ -195,7 +195,7 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <CardTitle icon="feather" label="Artist date" />
-            <p style={{ fontFamily: SERIF, fontSize: adPlan ? 16 : 14.5, fontStyle: 'italic', color: adPlan ? C.ink : C.mid, margin: '8px 0 0', lineHeight: 1.45 }}>
+            <p style={{ fontFamily: SERIF, fontSize: adPlan ? 16 : 14.5, fontStyle: adPlan ? 'normal' : 'italic', color: adPlan ? C.ink : C.mid, margin: '8px 0 0', lineHeight: 1.45 }}>
               {adPlan || 'Where will you take yourself this week?'}
             </p>
           </div>
