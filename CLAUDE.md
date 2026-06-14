@@ -25,17 +25,34 @@ shipped, both live:
    (`autocomplete="one-time-code"`). Tested working from the installed PWA. **Do
    NOT enable Google/Apple OAuth** — their redirect reintroduces the same
    bounce-to-Safari problem the code flow solved.
-2. **Small UX cleanups + a notes feature.** You-page now lists exercises you
-   *checked off* (not just answered ones); You-page check-in shows labeled,
-   consistently-styled "Looking forward to" / "Shared with the group" lines; the
-   Check-in composer field is renamed "Want to share something with the group?".
-   The **Today tab is renamed "Week N"** (your live derived week). NEW **private
-   notes journal** (migration `0010`, owner-only `notes` table; `src/lib/notes.jsx`
-   `useNotes`): write notes on the Week tab throughout the week, read them back by
-   week on You. Fully private — never shared with the circle.
+2. **A notes feature + a broad UX/IA pass.** NEW **private notes journal**
+   (migration `0010`, owner-only `notes` table; `src/lib/notes.jsx` `useNotes`):
+   write notes on the Week tab throughout the week, read them back by week on You.
+   Fully private. Plus a round of IA/copy cleanups (all live):
+   - **Today tab renamed "Week N"** (live derived week).
+   - **Week page IA redesign** (`Today.jsx`): week-anchored header (date · "Week N"
+     · the Artist's Way **theme** from new `src/data/weeks.js`); the standalone
+     Spotify chapter card folded into the Exercises card as a "♪ listen" link;
+     cards reordered Morning Pages → Exercises → Artist Date → Notes; removed the
+     old "Today"/"This week" section separators; **header date is now LIVE**
+     (`new Date()`) — was a hardcoded `DATE` mock in seed.js ("Thursday June 11");
+     Artist-Date plan text no longer italic when it's your real plan (italic only
+     for the placeholder/subtitles).
+   - **You page IA redesign** (`Journey.jsx`): split numbers from words — the
+     selected-week panel dropped its duplicate Mood + Morning-pages blocks
+     (those live in the all-weeks overview); they're now a compact "mood · X/7
+     pages" line in the week header, and the panel focuses on Artist date /
+     Check-in / Exercises / Notes. Also: You now lists exercises you *checked off*
+     (not just answered), and the check-in shows labeled "Looking forward to" /
+     "Shared with the group" lines. Plainer header copy.
+   - **Check-in composer** field renamed "Want to share something with the group?".
+   - **Circle header** plainer: "Your circle / Where everyone is this week."
+   - **Profile redesigned as a settings page** (`Profile.jsx`): grouped rows with
+     hairline dividers instead of 5 shadowed cards; **set-week + pause/resume
+     combined** into one "Your week" group; Sign out + Leave under "Account".
 
-The one remaining test row in the DB is an artist-date plan "test test" (week 1);
-offered to wipe it but not yet done.
+**DB wiped clean at end of session 4** — 0 users/cohorts/rows; the 103-row global
+exercise catalog is preserved. True clean slate for kickoff.
 
 Where we left off (session 3, June 13–14 2026): the app is **renamed `meraki`,
 fully on Supabase, redesigned (3 tabs), and DEPLOYED LIVE.** This session: built
