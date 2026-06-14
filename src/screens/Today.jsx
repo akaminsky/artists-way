@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { C, SERIF, ACCENT, ACCENT_SOFT } from '../lib/theme'
 import { Icon, MonoLabel, Checkbox, PagesStrip } from '../components/primitives'
-import { WEEK, DATE, DAY_LETTERS, EXERCISES } from '../data/seed'
+import { WEEK, DAY_LETTERS, EXERCISES } from '../data/seed'
 import { audioForWeek } from '../data/chapters'
 import { weekdayIndex } from '../lib/week'
 
@@ -105,7 +105,7 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
     <div style={{ padding: '6px 20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Title block */}
       <div style={{ padding: '6px 2px 2px' }}>
-        <MonoLabel>{DATE.weekday} · {DATE.day}</MonoLabel>
+        <MonoLabel>{new Date().toLocaleDateString(undefined, { weekday: 'long' })} · {new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}</MonoLabel>
         <h1 style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 500, color: C.ink, lineHeight: 1.2, margin: '8px 0 0' }}>
           Good morning, {displayName}.
         </h1>
