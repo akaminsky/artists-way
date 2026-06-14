@@ -29,12 +29,13 @@ export function useJourney() {
 
   const load = useCallback(async () => {
     if (!active) { setLoading(false); return }
-    const [wcRes, adRes, adDetRes, exRes, ansRes, mpRes] = await Promise.all([
+    const [wcRes, adRes, adDetRes, exRes, ansRes, progRes, mpRes] = await Promise.all([
       supabase.from('weekly_checkins').select('week, mood, looking_forward, share_text, created_at').eq('user_id', uid),
       supabase.from('artist_dates').select('week').eq('user_id', uid),
       supabase.from('artist_date_details').select('week, what_i_did').eq('user_id', uid),
       supabase.from('exercises').select('id, week, label'),
       supabase.from('exercise_answers').select('exercise_id, answer').eq('user_id', uid),
+      supabase.from('exercise_progress').select('exercise_id, completed').eq('user_id', uid),
       supabase.from('morning_pages').select('date').eq('user_id', uid),
     ])
 
@@ -83,16 +84,21 @@ export function useJourney() {
       .map((w) => ({ week: w, place: detailByWeek[w] || 'Artist date', done: doneWeeks.has(w) }))
       .sort((a, b) => b.week - a.week))
 
-    // reflections: answered exercises joined to their catalog label + week
+    // reflections: every exercise you've either checked done OR written an
+    // answer for, joined to its catalog label + week. (Was answers-only, which
+    // hid exercises you checked off without writing a note.)
     const exById = Object.fromEntries((exRes.data ?? []).map((e) => [e.id, e]))
-    setReflections((ansRes.data ?? [])
-      .filter((a) => (a.answer || '').trim())
-      .map((a) => {
-        const ex = exById[a.exercise_id]
-        return ex ? { id: a.exercise_id, week: ex.week, title: ex.label, answer: a.answer } : null
+    const answerById = {}
+    for (const a of (ansRes.data ?? [])) if ((a.answer || '').trim()) answerById[a.exercise_id] = a.answer
+    const doneIds = new Set((progRes.data ?? []).filter((p) => p.completed).map((p) => p.exercise_id))
+    const refIds = new Set([...Object.keys(answerById), ...doneIds])
+    setReflections([...refIds]
+      .map((id) => {
+        const ex = exById[id]
+        return ex ? { id, week: ex.week, title: ex.label, answer: answerById[id] || '', done: doneIds.has(id) } : null
       })
       .filter(Boolean)
-      .sort((a, b) => b.week - a.week))
+      .sort((a, b) => b.week - a.week || a.title.localeCompare(b.title)))
 
     setLoading(false)
   }, [active, uid, cohortId, startedOn])
@@ -100,13 +106,14 @@ export function useJourney() {
   useEffect(() => { load() }, [load])
 
   // Edit an answer from the journey. A non-empty answer keeps it marked done
-  // (mirrors Today); clearing it removes it from the list.
+  // (mirrors Today); clearing the note keeps a still-done exercise in the list
+  // (only drops it if it was there for the answer alone).
   const saveAnswer = useCallback(async (exerciseId, text) => {
     if (!active) return
     const hasText = Boolean(text && text.trim())
-    setReflections((list) => hasText
-      ? list.map((r) => r.id === exerciseId ? { ...r, answer: text } : r)
-      : list.filter((r) => r.id !== exerciseId))
+    setReflections((list) => list
+      .map((r) => r.id === exerciseId ? { ...r, answer: hasText ? text : '' } : r)
+      .filter((r) => r.done || (r.answer || '').trim()))
     const ops = [
       supabase.from('exercise_answers')
         .upsert({ user_id: uid, exercise_id: exerciseId, answer: text, updated_at: new Date().toISOString() }, { onConflict: 'user_id,exercise_id' }),

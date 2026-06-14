@@ -214,8 +214,10 @@ export default function Journey({ me, setMe, openDetail }) {
                         <span style={{ fontFamily: SERIF, fontSize: 15, fontWeight: 500, color: C.ink, lineHeight: 1.3 }}>{r.title}</span>
                         <Icon name="chevR" size={15} stroke={C.edge} style={{ flexShrink: 0 }} />
                       </div>
-                      <p style={{ fontFamily: SERIF, fontSize: 14, fontStyle: 'italic', color: C.mid, lineHeight: 1.5, margin: '6px 0 0',
-                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.answer}</p>
+                      <p style={{ fontFamily: SERIF, fontSize: 14, fontStyle: 'italic', color: (r.answer || '').trim() ? C.mid : C.muted, lineHeight: 1.5, margin: '6px 0 0',
+                        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {(r.answer || '').trim() || 'Done — tap to add a note'}
+                      </p>
                     </button>
                   ))}
                 </div>
