@@ -6,13 +6,16 @@ import { C, SERIF, SANS, MONO, ACCENT } from '../lib/theme'
 import { useAuth } from '../lib/auth'
 
 export default function SignIn() {
-  const { signIn } = useAuth()
+  const { signIn, verifyOtp } = useAuth()
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
+  const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   const valid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())
+  const codeDigits = code.replace(/\D/g, '')
+  const codeValid = codeDigits.length === 6
 
   async function send(e) {
     e.preventDefault()
@@ -24,6 +27,21 @@ export default function SignIn() {
       else setSent(true)
     } catch (err) {
       setError(err.message || 'Something went wrong.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function verify(e) {
+    e.preventDefault()
+    if (!codeValid || busy) return
+    setBusy(true); setError('')
+    try {
+      const { error } = await verifyOtp(email.trim(), codeDigits)
+      // On success the auth state change signs us in and unmounts this screen.
+      if (error) setError(error.message)
+    } catch (err) {
+      setError(err.message || 'That code didn’t work.')
     } finally {
       setBusy(false)
     }
@@ -48,7 +66,7 @@ export default function SignIn() {
             </p>
             <p style={{ fontFamily: SERIF, fontSize: 16.5, fontStyle: 'italic', color: C.mid, lineHeight: 1.55, margin: '0 0 30px' }}>
               That’s the spirit of twelve weeks of The Artist’s Way, walked
-              together. Enter your email and we’ll send a link to sign in — no
+              together. Enter your email and we’ll send a code to sign in — no
               password to remember.
             </p>
 
@@ -71,7 +89,7 @@ export default function SignIn() {
                   cursor: valid && !busy ? 'pointer' : 'default', opacity: valid && !busy ? 1 : 0.5,
                   transition: 'opacity 0.2s ease', boxShadow: '0 6px 16px rgba(138,94,126,0.22)',
                 }}>
-                {busy ? 'Sending…' : 'Send me a link'}
+                {busy ? 'Sending…' : 'Send me a code'}
               </button>
               {error && (
                 <span style={{ fontFamily: SANS, fontSize: 13, color: '#B5645C', textAlign: 'center' }}>{error}</span>
@@ -84,12 +102,43 @@ export default function SignIn() {
               Check your email
             </span>
             <p style={{ fontFamily: SERIF, fontSize: 17, color: C.ink, lineHeight: 1.55, margin: 0 }}>
-              We sent a sign-in link to <strong style={{ fontWeight: 600 }}>{email.trim()}</strong>.
-              Open it on this device and you’re in.
+              We sent a 6-digit code to <strong style={{ fontWeight: 600 }}>{email.trim()}</strong>.
+              Enter it here to sign in.
+            </p>
+
+            <form onSubmit={verify} style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 6 }}>
+              <input
+                type="text" inputMode="numeric" autoComplete="one-time-code" autoFocus
+                value={code} onChange={(e) => setCode(e.target.value)}
+                placeholder="000000" maxLength={6}
+                style={{
+                  width: '100%', background: C.card, border: `1px solid ${C.edge}`, borderRadius: 14,
+                  padding: '15px 16px', fontFamily: MONO, fontSize: 24, letterSpacing: '0.32em',
+                  textAlign: 'center', color: C.ink, outline: 'none',
+                  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)',
+                }}
+              />
+              <button
+                type="submit" disabled={!codeValid || busy}
+                style={{
+                  width: '100%', border: 'none', borderRadius: 14, padding: '15px',
+                  background: ACCENT, color: C.card, fontFamily: SERIF, fontSize: 16.5, fontWeight: 500,
+                  cursor: codeValid && !busy ? 'pointer' : 'default', opacity: codeValid && !busy ? 1 : 0.5,
+                  transition: 'opacity 0.2s ease', boxShadow: '0 6px 16px rgba(138,94,126,0.22)',
+                }}>
+                {busy ? 'Signing in…' : 'Sign in'}
+              </button>
+              {error && (
+                <span style={{ fontFamily: SANS, fontSize: 13, color: '#B5645C', textAlign: 'center' }}>{error}</span>
+              )}
+            </form>
+
+            <p style={{ fontFamily: SERIF, fontSize: 14, fontStyle: 'italic', color: C.mid, lineHeight: 1.5, margin: '2px 0 0' }}>
+              On a computer? You can also just tap the link in the same email.
             </p>
             <button
-              onClick={() => { setSent(false); setEmail('') }}
-              style={{ alignSelf: 'flex-start', marginTop: 4, background: 'none', border: 'none', padding: 0,
+              onClick={() => { setSent(false); setCode(''); setError('') }}
+              style={{ alignSelf: 'flex-start', marginTop: 2, background: 'none', border: 'none', padding: 0,
                 fontFamily: SERIF, fontSize: 14, fontStyle: 'italic', color: C.mid, cursor: 'pointer' }}>
               Use a different email
             </button>

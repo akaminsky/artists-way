@@ -61,6 +61,14 @@ export function AuthProvider({ children }) {
     })
   }, [])
 
+  // Verify the 6-digit code from the email. Unlike the magic link, this creates
+  // the session in *this* browser context — so it works inside the installed PWA
+  // on iOS, where tapping a link in Mail would otherwise open Safari instead.
+  const verifyOtp = useCallback(async (email, token) => {
+    if (!isConfigured) throw new Error('Supabase not configured')
+    return supabase.auth.verifyOtp({ email, token, type: 'email' })
+  }, [])
+
   const signOut = useCallback(async () => {
     if (isConfigured) await supabase.auth.signOut()
   }, [])
@@ -84,6 +92,7 @@ export function AuthProvider({ children }) {
     setProfile,
     updateProfile,
     signIn,
+    verifyOtp,
     signOut,
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
