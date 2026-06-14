@@ -1,11 +1,14 @@
 // tend — Screen 1: Daily home (the solo practice, by cadence: today + this week)
+import { useState } from 'react'
 import { C, SERIF, ACCENT, ACCENT_SOFT } from '../lib/theme'
 import { Icon, MonoLabel, Checkbox, PagesStrip } from '../components/primitives'
 import { WEEK, DATE, DAY_LETTERS, EXERCISES } from '../data/seed'
 import { audioForWeek } from '../data/chapters'
 import { weekdayIndex } from '../lib/week'
 
-export default function Today({ me, setMe, track, name, openDetail, openCheckin, openIdeas }) {
+const noteStamp = (iso) => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+
+export default function Today({ me, setMe, track, notes, name, openDetail, openCheckin, openIdeas }) {
   // Morning Pages + Artist Date read/write the backend when it's live (`track`);
   // otherwise they fall back to the local prototype `me`. Exercises are still on
   // `me` — they migrate in the next sub-step (they need the cohort catalog).
@@ -60,6 +63,17 @@ export default function Today({ me, setMe, track, name, openDetail, openCheckin,
         // a non-empty answer also marks it done (mirrors the backend behavior)
         exercises: { ...m.exercises, [id]: note && note.trim() ? true : m.exercises[id] },
       }))
+
+  // Notes: a private running journal for the week (Week tab to write, You to
+  // read back by week). Works on the backend; harmless no-op in prototype mode.
+  const thisWeekNotes = notes ? (notes.byWeek[exWeek] || []) : []
+  const [noteDraft, setNoteDraft] = useState('')
+  const addNote = () => {
+    const text = noteDraft.trim()
+    if (!text || !notes) return
+    notes.addNote(text, exWeek)
+    setNoteDraft('')
+  }
 
   // Weekly check-in nudge: a gentle cross-link as Sunday's call nears (Fri–Sun),
   // only while you haven't shared yet. The check-in's real home is Circle.
@@ -208,6 +222,45 @@ export default function Today({ me, setMe, track, name, openDetail, openCheckin,
                 </div>
               )
             })}
+          </div>
+        )}
+      </Card>
+
+      {/* Notes — a private running journal for the week */}
+      <Card>
+        <CardTitle icon="book">Notes</CardTitle>
+        <p style={{ fontFamily: SERIF, fontSize: 14.5, fontStyle: 'italic', color: C.mid, margin: '8px 0 0', lineHeight: 1.45 }}>
+          A private space — jot anything for yourself this week. Only you ever see these.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 13 }}>
+          <textarea
+            value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} rows={2}
+            placeholder="a thought, a line, something you noticed…"
+            style={{ resize: 'none', width: '100%', background: C.bg, border: `1px solid ${C.hair}`, borderRadius: 12,
+              padding: '11px 13px', fontFamily: SERIF, fontSize: 15, lineHeight: 1.5, color: C.ink, outline: 'none' }}
+          />
+          <button onClick={addNote} disabled={!noteDraft.trim()}
+            style={{ alignSelf: 'flex-start', border: 'none', borderRadius: 11, padding: '9px 17px',
+              background: noteDraft.trim() ? ACCENT : C.inset, color: noteDraft.trim() ? C.card : C.muted,
+              fontFamily: SERIF, fontSize: 14.5, fontWeight: 500, cursor: noteDraft.trim() ? 'pointer' : 'default',
+              WebkitTapHighlightColor: 'transparent' }}>
+            Add note
+          </button>
+        </div>
+        {thisWeekNotes.length > 0 && (
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {thisWeekNotes.map((n, i) => (
+              <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, paddingTop: i === 0 ? 0 : 12, borderTop: i === 0 ? 'none' : `1px solid ${C.hair}` }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>{n.body}</p>
+                  <MonoLabel style={{ display: 'block', marginTop: 5 }}>{noteStamp(n.created_at)}</MonoLabel>
+                </div>
+                <button onClick={() => notes.deleteNote(n.id)} aria-label="Delete note"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, fontSize: 20, lineHeight: 1, padding: '0 2px', WebkitTapHighlightColor: 'transparent' }}>
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </Card>

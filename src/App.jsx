@@ -17,6 +17,7 @@ import { ME, WEEK } from './data/seed'
 import { useAuth } from './lib/auth'
 import { useCohort } from './lib/cohort'
 import { useTracking } from './lib/tracking'
+import { useNotes } from './lib/notes'
 import { inviteUrl } from './lib/invite'
 
 const ME_KEY = 'tend.me.v2'
@@ -50,6 +51,7 @@ export default function App() {
   const { configured, ready, session, profile, signOut } = useAuth()
   const { loading: cohortLoading, hasCohort, cohort } = useCohort()
   const track = useTracking()
+  const notes = useNotes()
   const [me, setMe] = useState(loadMe)
   const [tab, setTab] = useState('today')
   const [detail, setDetail] = useState(null)
@@ -175,8 +177,8 @@ export default function App() {
 
       {/* scroll content */}
       <div className="app-scroll">
-        {tab === 'today' && <Today me={me} setMe={setMe} track={track} name={myName} openDetail={setDetail} openCheckin={openCheckin} openIdeas={openIdeas} />}
-        {tab === 'you' && <Journey me={me} setMe={setMe} openDetail={setDetail} />}
+        {tab === 'today' && <Today me={me} setMe={setMe} track={track} notes={notes} name={myName} openDetail={setDetail} openCheckin={openCheckin} openIdeas={openIdeas} />}
+        {tab === 'you' && <Journey me={me} setMe={setMe} notes={notes} openDetail={setDetail} />}
         {tab === 'group' && <Group me={me} openCheckin={openCheckin} goToYou={goToYou} />}
       </div>
 
@@ -191,7 +193,9 @@ export default function App() {
             <button key={t.id} onClick={() => setTab(t.id)}
               style={{ flex: 1, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '6px 0', WebkitTapHighlightColor: 'transparent' }}>
               <Icon name={t.icon} size={22} stroke={on ? ACCENT : C.muted} sw={on ? 1.9 : 1.6} />
-              <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: on ? 600 : 500, color: on ? ACCENT : C.muted, letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>{t.label}</span>
+              <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: on ? 600 : 500, color: on ? ACCENT : C.muted, letterSpacing: '0.01em', whiteSpace: 'nowrap' }}>
+                {t.id === 'today' ? `Week ${myWeek}` : t.label}
+              </span>
             </button>
           )
         })}

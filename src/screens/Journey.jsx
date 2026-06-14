@@ -10,7 +10,7 @@ import { useJourney } from '../lib/journey'
 
 const EMPTY_WEEK = [false, false, false, false, false, false, false]
 
-export default function Journey({ me, setMe, openDetail }) {
+export default function Journey({ me, setMe, notes, openDetail }) {
   const j = useJourney()
   const backend = j.ready
   const currentWeek = backend ? j.week : WEEK.n
@@ -64,6 +64,7 @@ export default function Journey({ me, setMe, openDetail }) {
   const wDate = artistDates.find((d) => d.week === viewWeek)
   const wCheckin = checkins.find((c) => c.week === viewWeek)
   const wRefs = reflections.filter((r) => r.week === viewWeek)
+  const wNotes = notes ? (notes.byWeek[viewWeek] || []) : []
   const future = viewWeek > currentWeek
 
   const Card = ({ children, onClick, style = {} }) => (
@@ -229,12 +230,27 @@ export default function Journey({ me, setMe, openDetail }) {
                 </div>
               )}
             </Block>
+
+            <Block label={`Notes${wNotes.length ? ` · ${wNotes.length}` : ''}`}>
+              {wNotes.length === 0 ? dash : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {wNotes.map((n) => (
+                    <div key={n.id} style={{ background: C.bg, border: `1px solid ${C.hair}`, borderRadius: 11, padding: '11px 13px' }}>
+                      <p style={{ fontFamily: SERIF, fontSize: 14.5, color: C.ink, lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>{n.body}</p>
+                      <MonoLabel style={{ display: 'block', marginTop: 6 }}>{noteStamp(n.created_at)}</MonoLabel>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Block>
           </div>
         )}
       </Card>
     </div>
   )
 }
+
+const noteStamp = (iso) => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
 // Check-in sub-parts on the selected-week card: a soft italic caption over the
 // text, so "looking forward to" and "shared" read the same and are clearly named.
