@@ -15,7 +15,9 @@ export default function SignIn() {
 
   const valid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())
   const codeDigits = code.replace(/\D/g, '')
-  const codeValid = codeDigits.length === 6
+  // Supabase's email OTP length is configurable (6–8+ digits), so accept any
+  // 6-or-more-digit code rather than hardcoding one length.
+  const codeValid = codeDigits.length >= 6
 
   async function send(e) {
     e.preventDefault()
@@ -109,11 +111,11 @@ export default function SignIn() {
             <form onSubmit={verify} style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 6 }}>
               <input
                 type="text" inputMode="numeric" autoComplete="one-time-code" autoFocus
-                value={code} onChange={(e) => setCode(e.target.value)}
-                placeholder="000000" maxLength={6}
+                value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="Enter code" maxLength={10}
                 style={{
                   width: '100%', background: C.card, border: `1px solid ${C.edge}`, borderRadius: 14,
-                  padding: '15px 16px', fontFamily: MONO, fontSize: 24, letterSpacing: '0.32em',
+                  padding: '15px 16px', fontFamily: MONO, fontSize: 24, letterSpacing: '0.22em',
                   textAlign: 'center', color: C.ink, outline: 'none',
                   boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)',
                 }}
