@@ -114,13 +114,6 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
             {themeForWeek(exWeek)}
           </p>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 13, fontFamily: SERIF, fontSize: 13.5, color: C.mid }}>
-          <span>{pagesDone}/7 pages</span>
-          <span style={{ color: C.edge }}>·</span>
-          <span>artist date {adDone ? '✓' : '○'}</span>
-          <span style={{ color: C.edge }}>·</span>
-          <span>{exItems.length ? `${exDone}/${exItems.length} exercises` : 'exercises —'}</span>
-        </div>
       </div>
 
       {/* Morning Pages — just a checkbox, no writing */}
