@@ -11,6 +11,32 @@ This is a personal passion project, not a business. Scope decisions should favor
 
 ## ⟶ RESUME HERE (next session)
 
+**Session 4 (June 14 2026) — the big pre-kickoff blocker is CLEARED.** Two things
+shipped, both live:
+1. **Custom SMTP + code-based sign-in.** Magic *links* can't reach an installed
+   iOS PWA (Mail opens Safari, a separate context — the PWA session never lands).
+   Switched to a magic *code* (OTP): enter email → type the 6-digit code back
+   into the app → `verifyOtp` makes the session in-context, no redirect. Custom
+   SMTP is live via **Resend** (domain `send.alexakaminsky.com`, DNS on Namecheap;
+   `smtp.resend.com:465`, user `resend`, sender `noreply@send.alexakaminsky.com`).
+   This also unlocked email-template editing (Supabase blocks it until custom SMTP
+   exists); the Magic Link + Confirm signup templates now include `{{ .Token }}`.
+   `auth.jsx` has `verifyOtp`; `SignIn.jsx` has the code field
+   (`autocomplete="one-time-code"`). Tested working from the installed PWA. **Do
+   NOT enable Google/Apple OAuth** — their redirect reintroduces the same
+   bounce-to-Safari problem the code flow solved.
+2. **Small UX cleanups + a notes feature.** You-page now lists exercises you
+   *checked off* (not just answered ones); You-page check-in shows labeled,
+   consistently-styled "Looking forward to" / "Shared with the group" lines; the
+   Check-in composer field is renamed "Want to share something with the group?".
+   The **Today tab is renamed "Week N"** (your live derived week). NEW **private
+   notes journal** (migration `0010`, owner-only `notes` table; `src/lib/notes.jsx`
+   `useNotes`): write notes on the Week tab throughout the week, read them back by
+   week on You. Fully private — never shared with the circle.
+
+The one remaining test row in the DB is an artist-date plan "test test" (week 1);
+offered to wipe it but not yet done.
+
 Where we left off (session 3, June 13–14 2026): the app is **renamed `meraki`,
 fully on Supabase, redesigned (3 tabs), and DEPLOYED LIVE.** This session: built
 the whole backend (steps 2–6 + Journey + Profile), did the IA redesign (5→3 tabs:
@@ -33,7 +59,9 @@ Live backend facts:
   nullable — fixed a NOT-NULL vs `on delete set null` contradiction that errored
   when a cohort creator's account was deleted), `0009` (**started_on defaults to
   the Sunday on/before join** — `current_date - dow` — so weeks run Sun–Sat for
-  everyone). The `0001` ledger gap is cosmetic.
+  everyone), `0010` (**private per-week `notes` table** — owner-only RLS, no
+  cohort_id, never shared; backs the notes journal). The `0001` ledger gap is
+  cosmetic.
 - Exercise catalog is **global + already seeded** (103 rows, all 12 weeks) via
   `supabase/seed_exercises.sql` (re-runnable; upserts on `(week, sort)` so it
   never deletes progress). No per-cohort re-seeding — new circles inherit it.
