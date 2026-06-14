@@ -189,12 +189,18 @@ export default function Journey({ me, setMe, openDetail }) {
 
             <Block label="Check-in">
               {wCheckin && (wCheckin.lookingForward || wCheckin.shareText) ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
                   {wCheckin.lookingForward && (
-                    <p style={{ fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5, margin: 0 }}>{wCheckin.lookingForward}</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <span style={ciSubLabel}>Looking forward to</span>
+                      <p style={ciBody}>{wCheckin.lookingForward}</p>
+                    </div>
                   )}
                   {wCheckin.shareText && (
-                    <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.mid, lineHeight: 1.5, margin: 0 }}>“{wCheckin.shareText}”</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <span style={ciSubLabel}>Shared with the group</span>
+                      <p style={ciBody}>{wCheckin.shareText}</p>
+                    </div>
                   )}
                 </div>
               ) : dash}
@@ -229,6 +235,11 @@ export default function Journey({ me, setMe, openDetail }) {
     </div>
   )
 }
+
+// Check-in sub-parts on the selected-week card: a soft italic caption over the
+// text, so "looking forward to" and "shared" read the same and are clearly named.
+const ciSubLabel = { fontFamily: SERIF, fontSize: 12.5, fontStyle: 'italic', color: C.muted, letterSpacing: '0.01em' }
+const ciBody = { fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5, margin: 0 }
 
 const ACCENT_RING = 'rgba(138,94,126,0.22)'
 

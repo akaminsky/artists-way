@@ -108,7 +108,7 @@ export default function Checkin({ me, setMe, track, onClose }) {
       <Field label="What I'm looking forward to" value={ci.forward} onChange={(v) => setCI({ forward: v })}
         placeholder="the week ahead, something you’re circling toward…" rows={3} />
 
-      <Field label="Something to share" optional value={ci.win} onChange={(v) => setCI({ win: v })}
+      <Field label="Want to share something with the group?" optional value={ci.win} onChange={(v) => setCI({ win: v })}
         placeholder="a win, an insight, an aha moment, a reflection — anything…" rows={2} />
 
       {/* Share */}
