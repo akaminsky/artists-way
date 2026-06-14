@@ -8,6 +8,24 @@ import { weekdayIndex } from '../lib/week'
 
 const noteStamp = (iso) => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
+// Defined at module scope (not inside Today) so their identities stay stable
+// across re-renders — otherwise typing in the notes box remounts the whole card
+// subtree on every keystroke, dropping focus and jumping scroll to the top.
+const Card = ({ children, onClick, style = {} }) => (
+  <div onClick={onClick} style={{
+    background: C.card, borderRadius: 14, boxShadow: '0 6px 20px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.05)',
+    padding: '18px 18px', cursor: onClick ? 'pointer' : 'default', ...style,
+  }}>{children}</div>
+)
+
+const CardTitle = ({ icon, children, label }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <Icon name={icon} size={19} stroke={ACCENT} sw={1.7} />
+    <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: C.ink }}>{children}</span>
+    {label && <MonoLabel style={{ marginLeft: 2 }}>{label}</MonoLabel>}
+  </div>
+)
+
 export default function Today({ me, setMe, track, notes, name, openDetail, openCheckin, openIdeas }) {
   // Morning Pages + Artist Date read/write the backend when it's live (`track`);
   // otherwise they fall back to the local prototype `me`. Exercises are still on
@@ -83,25 +101,6 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
   // Thu–Sat (Sunday-first index 4–6), as Sunday's call approaches
   const showCheckinNudge = Boolean(openCheckin) && weekdayIndex() >= 4 && !checkedIn
 
-  const Card = ({ children, onClick, style = {} }) => (
-    <div onClick={onClick} style={{
-      background: C.card, borderRadius: 14, boxShadow: '0 6px 20px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.05)',
-      padding: '18px 18px', cursor: onClick ? 'pointer' : 'default', ...style,
-    }}>{children}</div>
-  )
-
-  const CardTitle = ({ icon, children, label }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <Icon name={icon} size={19} stroke={ACCENT} sw={1.7} />
-      <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: C.ink }}>{children}</span>
-      {label && <MonoLabel style={{ marginLeft: 2 }}>{label}</MonoLabel>}
-    </div>
-  )
-
-  const SectionLabel = ({ children }) => (
-    <MonoLabel style={{ display: 'block', margin: '6px 2px -4px' }}>{children}</MonoLabel>
-  )
-
   return (
     <div style={{ padding: '6px 20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Title block */}
@@ -114,8 +113,6 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
           A quiet page is waiting.
         </p>
       </div>
-
-      <SectionLabel>Today</SectionLabel>
 
       {/* Morning Pages — just a checkbox, no writing */}
       <Card>
@@ -140,8 +137,6 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
           </p>
         )}
       </Card>
-
-      <SectionLabel>This week</SectionLabel>
 
       {/* Listen to this week's chapter (Spotify audiobook) */}
       {audioForWeek(exWeek) && (
