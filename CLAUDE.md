@@ -11,17 +11,23 @@ This is a personal passion project, not a business. Scope decisions should favor
 
 ## ⟶ RESUME HERE (next session)
 
-> ## ⚠️ LIVE WITH REAL USERS — DO NOT WIPE THE DB
+> ## ⚠️ LIVE WITH REAL USERS — DO NOT WIPE THE DB, DO NOT PUSH UNASKED
 > As of ~June 15 2026 meraki **kicked off and has real users** (the 5-friend
 > circle, actively using it; early feedback positive). The DB now holds real
 > accounts, cohorts, morning-pages history, notes, check-ins, and answers.
-> **Never** run destructive SQL (truncate / delete-all / drop-with-data /
-> `delete from auth.users` / cascading re-seed) like we did in test sessions —
-> if a task seems to need it, STOP and confirm with Alexa first. Treat every
-> schema change as a **data migration**: additive and backward-safe by default
-> (add nullable columns / new tables; backfill explicitly; avoid renames/drops
-> that lose data). New migrations → `supabase/migrations/` (next is `0011`),
-> safe to run against a populated prod DB.
+>
+> **Two hard rules now that it's live:**
+> 1. **Never commit or push without Alexa explicitly asking, each time.** A push
+>    to `main` is a production deploy to real users. Make + verify edits, leave
+>    them uncommitted, and wait for her go-ahead. (Earlier in dev I pushed after
+>    each change — no longer the default.)
+> 2. **Never** run destructive SQL (truncate / delete-all / drop-with-data /
+>    `delete from auth.users` / cascading re-seed) like we did in test sessions —
+>    if a task seems to need it, STOP and confirm first. Treat every schema
+>    change as a **data migration**: additive and backward-safe by default (add
+>    nullable columns / new tables; backfill explicitly; avoid renames/drops that
+>    lose data). New migrations → `supabase/migrations/` (next is `0011`), safe to
+>    run against a populated prod DB.
 
 **Session 4 (June 14 2026) — the big pre-kickoff blocker is CLEARED.** Two things
 shipped, both live:
@@ -95,8 +101,12 @@ Live backend facts:
   when a cohort creator's account was deleted), `0009` (**started_on defaults to
   the Sunday on/before join** — `current_date - dow` — so weeks run Sun–Sat for
   everyone), `0010` (**private per-week `notes` table** — owner-only RLS, no
-  cohort_id, never shared; backs the notes journal). The `0001` ledger gap is
-  cosmetic.
+  cohort_id, never shared; backs the notes journal), `0011` (**`week_photos`
+  table + private `week-photos` Storage bucket** — weekly photo "Memories",
+  private by default with a `shared` flag readable by the circle; files in
+  Storage, signed-URL display, client-side resize via `src/lib/image.js`; UI in
+  the Week "Memories" card, the You per-week panel, and the Circle expanded card).
+  The `0001` ledger gap is cosmetic.
 - Exercise catalog is **global + already seeded** (103 rows, all 12 weeks) via
   `supabase/seed_exercises.sql` (re-runnable; upserts on `(week, sort)` so it
   never deletes progress). No per-cohort re-seeding — new circles inherit it.
