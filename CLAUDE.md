@@ -11,6 +11,18 @@ This is a personal passion project, not a business. Scope decisions should favor
 
 ## ⟶ RESUME HERE (next session)
 
+> ## ⚠️ LIVE WITH REAL USERS — DO NOT WIPE THE DB
+> As of ~June 15 2026 meraki **kicked off and has real users** (the 5-friend
+> circle, actively using it; early feedback positive). The DB now holds real
+> accounts, cohorts, morning-pages history, notes, check-ins, and answers.
+> **Never** run destructive SQL (truncate / delete-all / drop-with-data /
+> `delete from auth.users` / cascading re-seed) like we did in test sessions —
+> if a task seems to need it, STOP and confirm with Alexa first. Treat every
+> schema change as a **data migration**: additive and backward-safe by default
+> (add nullable columns / new tables; backfill explicitly; avoid renames/drops
+> that lose data). New migrations → `supabase/migrations/` (next is `0011`),
+> safe to run against a populated prod DB.
+
 **Session 4 (June 14 2026) — the big pre-kickoff blocker is CLEARED.** Two things
 shipped, both live:
 1. **Custom SMTP + code-based sign-in.** Magic *links* can't reach an installed
@@ -52,7 +64,13 @@ shipped, both live:
      combined** into one "Your week" group; Sign out + Leave under "Account".
 
 **DB wiped clean at end of session 4** — 0 users/cohorts/rows; the 103-row global
-exercise catalog is preserved. True clean slate for kickoff.
+exercise catalog preserved. **That was the LAST wipe** — the circle has since
+kicked off and the DB now holds real user data (see the LIVE WITH REAL USERS
+banner at the top of this section). Also note: at kickoff every friend is a
+brand-new signup, so the **"Confirm signup" email template** (not just "Magic
+Link") must carry the branded code HTML + `{{ .Token }}`; deliverability still
+needs the SPF + bounce-MX records finished in Resend/Namecheap (DKIM + DMARC are
+live; new sending domain means mark-as-not-spam helps early reputation).
 
 Where we left off (session 3, June 13–14 2026): the app is **renamed `meraki`,
 fully on Supabase, redesigned (3 tabs), and DEPLOYED LIVE.** This session: built
