@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { C, SERIF, ACCENT, ACCENT_SOFT } from '../lib/theme'
 import { Icon, MonoLabel, Checkbox, PagesStrip } from '../components/primitives'
+import { PhotoStrip } from '../components/Photos'
 import { WEEK, DAY_LETTERS, EXERCISES } from '../data/seed'
 import { audioForWeek } from '../data/chapters'
 import { themeForWeek } from '../data/weeks'
@@ -27,7 +28,7 @@ const CardTitle = ({ icon, children, label }) => (
   </div>
 )
 
-export default function Today({ me, setMe, track, notes, name, openDetail, openCheckin, openIdeas }) {
+export default function Today({ me, setMe, track, notes, photos, name, openDetail, openCheckin, openIdeas }) {
   // Morning Pages + Artist Date read/write the backend when it's live (`track`);
   // otherwise they fall back to the local prototype `me`. Exercises are still on
   // `me` — they migrate in the next sub-step (they need the cohort catalog).
@@ -85,6 +86,8 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
   // Notes: a private running journal for the week (Week tab to write, You to
   // read back by week). Works on the backend; harmless no-op in prototype mode.
   const thisWeekNotes = notes ? (notes.byWeek[exWeek] || []) : []
+  const photosReady = Boolean(photos && photos.ready)
+  const thisWeekPhotos = photosReady ? (photos.byWeek[exWeek] || []) : []
   const [noteDraft, setNoteDraft] = useState('')
   const addNote = () => {
     const text = noteDraft.trim()
@@ -215,6 +218,22 @@ export default function Today({ me, setMe, track, notes, name, openDetail, openC
           </button>
         </div>
       </Card>
+
+      {/* Memories — photos to keep for the week (private unless shared) */}
+      {photosReady && (
+        <Card>
+          <CardTitle icon="image">Memories</CardTitle>
+          <p style={{ fontFamily: SERIF, fontSize: 14.5, fontStyle: 'italic', color: C.mid, margin: '8px 0 14px', lineHeight: 1.45 }}>
+            A few photos to keep from this week — from your artist date, or anything that inspired you. Private unless you share.
+          </p>
+          <PhotoStrip
+            photos={thisWeekPhotos}
+            onAdd={(file) => photos.addPhoto(file, exWeek)}
+            onToggleShare={photos.toggleShare}
+            onDelete={photos.deletePhoto}
+          />
+        </Card>
+      )}
 
       {/* Notes — a private running journal for the week */}
       <Card>

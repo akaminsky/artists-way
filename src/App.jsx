@@ -18,6 +18,7 @@ import { useAuth } from './lib/auth'
 import { useCohort } from './lib/cohort'
 import { useTracking } from './lib/tracking'
 import { useNotes } from './lib/notes'
+import { usePhotos } from './lib/photos'
 import { inviteUrl } from './lib/invite'
 
 const ME_KEY = 'tend.me.v2'
@@ -52,6 +53,7 @@ export default function App() {
   const { loading: cohortLoading, hasCohort, cohort } = useCohort()
   const track = useTracking()
   const notes = useNotes()
+  const photos = usePhotos()
   const [me, setMe] = useState(loadMe)
   const [tab, setTab] = useState('today')
   const [detail, setDetail] = useState(null)
@@ -177,8 +179,8 @@ export default function App() {
 
       {/* scroll content */}
       <div className="app-scroll">
-        {tab === 'today' && <Today me={me} setMe={setMe} track={track} notes={notes} name={myName} openDetail={setDetail} openCheckin={openCheckin} openIdeas={openIdeas} />}
-        {tab === 'you' && <Journey me={me} setMe={setMe} notes={notes} openDetail={setDetail} />}
+        {tab === 'today' && <Today me={me} setMe={setMe} track={track} notes={notes} photos={photos} name={myName} openDetail={setDetail} openCheckin={openCheckin} openIdeas={openIdeas} />}
+        {tab === 'you' && <Journey me={me} setMe={setMe} notes={notes} photos={photos} openDetail={setDetail} />}
         {tab === 'group' && <Group me={me} openCheckin={openCheckin} goToYou={goToYou} />}
       </div>
 

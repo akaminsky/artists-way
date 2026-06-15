@@ -5,10 +5,11 @@
 import { useState } from 'react'
 import { C, SERIF, MONO, ACCENT } from '../lib/theme'
 import { Icon, MonoLabel, MoodChip } from '../components/primitives'
+import { PhotoStrip } from '../components/Photos'
 import { WEEK, JOURNEY, EXERCISES, moodByKey } from '../data/seed'
 import { useJourney } from '../lib/journey'
 
-export default function Journey({ me, setMe, notes, openDetail }) {
+export default function Journey({ me, setMe, notes, photos, openDetail }) {
   const j = useJourney()
   const backend = j.ready
   const currentWeek = backend ? j.week : WEEK.n
@@ -61,6 +62,7 @@ export default function Journey({ me, setMe, notes, openDetail }) {
   const wCheckin = checkins.find((c) => c.week === viewWeek)
   const wRefs = reflections.filter((r) => r.week === viewWeek)
   const wNotes = notes ? (notes.byWeek[viewWeek] || []) : []
+  const wPhotos = photos ? (photos.byWeek[viewWeek] || []) : []
   const future = viewWeek > currentWeek
 
   const Card = ({ children, onClick, style = {} }) => (
@@ -221,6 +223,12 @@ export default function Journey({ me, setMe, notes, openDetail }) {
                     </button>
                   ))}
                 </div>
+              )}
+            </Block>
+
+            <Block label={`Photos${wPhotos.length ? ` · ${wPhotos.length}` : ''}`}>
+              {wPhotos.length === 0 ? dash : (
+                <PhotoStrip photos={wPhotos} onToggleShare={photos.toggleShare} onDelete={photos.deletePhoto} size={64} />
               )}
             </Block>
 

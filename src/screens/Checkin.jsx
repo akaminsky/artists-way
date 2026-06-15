@@ -73,7 +73,7 @@ export default function Checkin({ me, setMe, track, onClose }) {
       )}
       <div className={onClose ? 'app-scroll' : undefined} style={{ padding: '6px 20px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ padding: '6px 2px 0' }}>
-        <MonoLabel>Check-in · before Sunday’s call</MonoLabel>
+        <MonoLabel>Check-in before Sunday @ 19:00</MonoLabel>
         <h1 style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 500, color: C.ink, lineHeight: 1.2, margin: '8px 0 0' }}>
           How was your week {weekN}?
         </h1>
@@ -127,7 +127,7 @@ export default function Checkin({ me, setMe, track, onClose }) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 18 }}>
           {justShared
             ? <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: ACCENT }}>kept — see you Sunday.</span>
-            : <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>You can change this any time before the call.</span>}
+            : <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>You can change this any time before Sunday evening.</span>}
         </div>
       </div>
       </div>

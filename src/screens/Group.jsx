@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { C, SERIF, ACCENT } from '../lib/theme'
 import { Icon, MonoLabel, Avatar, MoodChip } from '../components/primitives'
+import { PhotoStrip } from '../components/Photos'
 import { WEEK, FRIENDS, EXERCISES, moodByKey } from '../data/seed'
 import { useCircle } from '../lib/circle'
 
@@ -50,7 +51,7 @@ export default function Group({ me, openCheckin, goToYou }) {
 
   const Person = ({ p }) => {
     const mood = moodByKey(p.mood)
-    const expandable = Boolean(p.lookingForward || p.shareText)
+    const expandable = Boolean(p.lookingForward || p.shareText || (p.photos && p.photos.length))
     const open = openId === p.id
     return (
       <div onClick={expandable ? () => setOpenId(open ? null : p.id) : undefined}
@@ -108,6 +109,12 @@ export default function Group({ me, openCheckin, goToYou }) {
                 <span style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.ink, lineHeight: 1.5 }}>“{p.shareText}”</span>
               </div>
             )}
+            {p.photos && p.photos.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <MonoLabel>Memories</MonoLabel>
+                <PhotoStrip photos={p.photos} size={60} />
+              </div>
+            )}
             {p.you && goToYou && (
               <button onClick={(e) => { e.stopPropagation(); goToYou() }}
                 style={{ alignSelf: 'flex-start', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5, WebkitTapHighlightColor: 'transparent' }}>
@@ -143,7 +150,7 @@ export default function Group({ me, openCheckin, goToYou }) {
             <Icon name="pen" size={19} stroke={ACCENT} sw={1.7} />
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: SERIF, fontSize: 16.5, fontWeight: 500, color: C.ink }}>Share your check-in</div>
-              <div style={{ fontFamily: SERIF, fontSize: 13.5, fontStyle: 'italic', color: C.mid, marginTop: 2 }}>Before Sunday’s call — how was your week?</div>
+              <div style={{ fontFamily: SERIF, fontSize: 13.5, fontStyle: 'italic', color: C.mid, marginTop: 2 }}>Before Sunday’s check-in — how was your week?</div>
             </div>
             <Icon name="chevR" size={16} stroke={C.edge} />
           </button>
@@ -171,7 +178,7 @@ export default function Group({ me, openCheckin, goToYou }) {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 22, opacity: 0.8 }}>
         <Icon name="circle3" size={15} stroke={C.muted} />
-        <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>Sunday’s call brings you back together.</span>
+        <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>Sunday’s check-in brings you back together.</span>
       </div>
     </div>
   )

@@ -25,6 +25,8 @@ export function Icon({ name, size = 20, stroke = C.mid, sw = 1.6, fill = 'none',
     bookmark: <g {...p}><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.6L5 21V4a1 1 0 0 1 1-1Z"/></g>,
     plus:  <g {...p}><path d="M12 5v14M5 12h14"/></g>,
     headphones: <g {...p}><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></g>,
+    image: <g {...p}><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="M5 17l4.5-4 3 2.5L16 11l3 3"/></g>,
+    book:  <g {...p}><path d="M6 4h11a1 1 0 0 1 1 1v15H8a2 2 0 0 0-2 2Z"/><path d="M6 20a2 2 0 0 1 2-2h9"/></g>,
   }
   return <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'block', ...style }}>{paths[name]}</svg>
 }

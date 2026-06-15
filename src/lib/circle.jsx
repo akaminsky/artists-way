@@ -26,13 +26,14 @@ export function useCircle() {
     if (!active) { setLoading(false); return }
     const weekDates = currentWeekDates()
 
-    const [memRes, mpRes, adRes, exRes, epRes, wcRes] = await Promise.all([
+    const [memRes, mpRes, adRes, exRes, epRes, wcRes, wpRes] = await Promise.all([
       supabase.from('memberships').select('user_id, started_on, paused_at, joined_at').eq('cohort_id', cohortId),
       supabase.from('morning_pages').select('user_id, date').eq('cohort_id', cohortId).gte('date', weekDates[0]).lte('date', weekDates[6]),
       supabase.from('artist_dates').select('user_id, week').eq('cohort_id', cohortId),
       supabase.from('exercises').select('id, week'),
       supabase.from('exercise_progress').select('user_id, exercise_id').eq('cohort_id', cohortId).eq('completed', true),
       supabase.from('weekly_checkins').select('user_id, week, mood, looking_forward, share_text, created_at').eq('cohort_id', cohortId),
+      supabase.from('week_photos').select('user_id, week, storage_path').eq('cohort_id', cohortId).eq('shared', true),
     ])
 
     const memberships = memRes.data ?? []
@@ -66,6 +67,19 @@ export function useCircle() {
       exDoneByUserWeek[k] = (exDoneByUserWeek[k] || 0) + 1
     }
 
+    // shared photos in the cohort → signed urls, grouped by user+week
+    const wpRows = wpRes.data ?? []
+    let photoUrlByPath = {}
+    if (wpRows.length) {
+      const { data: signed } = await supabase.storage.from('week-photos').createSignedUrls(wpRows.map((r) => r.storage_path), 3600)
+      photoUrlByPath = Object.fromEntries((signed ?? []).map((s) => [s.path, s.signedUrl]))
+    }
+    const photosByUserWeek = {}
+    for (const r of wpRows) {
+      const k = `${r.user_id}:${r.week}`
+      ;(photosByUserWeek[k] ||= []).push({ id: r.storage_path, url: photoUrlByPath[r.storage_path] || null, shared: true })
+    }
+
     // latest mood per user+week
     const moodByUserWeek = {}
     for (const r of (wcRes.data ?? [])) {
@@ -94,6 +108,7 @@ export function useCircle() {
         mood: ci?.mood || '',
         lookingForward: ci?.looking_forward || '',
         shareText: ci?.share_text || '',
+        photos: photosByUserWeek[`${m.user_id}:${week}`] || [],
       }
     })
     // you first, then alphabetical
@@ -109,7 +124,7 @@ export function useCircle() {
   useEffect(() => {
     if (!active) return
     const channel = supabase.channel(`circle:${cohortId}`)
-    for (const table of ['morning_pages', 'artist_dates', 'exercise_progress', 'weekly_checkins', 'memberships']) {
+    for (const table of ['morning_pages', 'artist_dates', 'exercise_progress', 'weekly_checkins', 'memberships', 'week_photos']) {
       channel.on('postgres_changes',
         { event: '*', schema: 'public', table, filter: `cohort_id=eq.${cohortId}` },
         () => load())
