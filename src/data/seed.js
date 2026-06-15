@@ -32,7 +32,7 @@ export const FRIENDS = [
 
 // ── Artist Date idea library (the shared "well") ──────
 // tags: category · cost (Free / Low / $$) · setting (Indoor / Outdoor) · social (Solo / Group)
-export const IDEA_CATEGORIES = ['Nature', 'Culture', 'Making', 'Music', 'Food', 'Quiet', 'Words', 'Movement', 'Wonder', 'Beauty']
+export const IDEA_CATEGORIES = ['Nature', 'Culture', 'Making', 'Music', 'Food', 'Quiet', 'Words', 'Movement', 'Wonder', 'Beauty', 'Other']
 export const IDEA_COSTS = ['Free', 'Low', '$$']
 export const IDEA_SETTINGS = ['Indoor', 'Outdoor']
 export const IDEA_SOCIAL = ['Solo', 'Group']
