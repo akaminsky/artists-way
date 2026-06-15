@@ -10,6 +10,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false, // we register + poll for updates ourselves in main.jsx
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'meraki — Artist’s Way circle',
