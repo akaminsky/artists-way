@@ -162,13 +162,17 @@ export function useTracking() {
   }, [active, uid, cohortId, load])
 
   // ── Weekly check-in: write becomes visible to the circle ──
-  const saveCheckin = useCallback(async ({ mood, forward, win }) => {
+  // Defaults to the current week; pass `week` to backfill/edit a past week (from
+  // Circle's look-back). Only the current week's row is held in local state.
+  const saveCheckin = useCallback(async ({ mood, forward, win, week: targetWeek } = {}) => {
     if (!active) return
+    const w = targetWeek ?? week
     const next = { mood: mood || null, looking_forward: forward || null, share_text: win || null }
-    setCheckin(next)
+    if (w === week) setCheckin(next)
     const res = await supabase.from('weekly_checkins')
-      .upsert({ user_id: uid, cohort_id: cohortId, week, ...next, updated_at: new Date().toISOString() }, { onConflict: 'user_id,week' })
-    if (res.error) load()
+      .upsert({ user_id: uid, cohort_id: cohortId, week: w, ...next, updated_at: new Date().toISOString() }, { onConflict: 'user_id,week' })
+    if (res.error && w === week) load()
+    return res
   }, [active, uid, cohortId, week, load])
 
   const pages = weekDates.map((d) => doneDates.has(d))

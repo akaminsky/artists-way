@@ -21,6 +21,10 @@ export function useCircle() {
 
   const [loading, setLoading] = useState(true)
   const [members, setMembers] = useState([])
+  // Every member's check-in for every week (not just the live one), so Circle
+  // can look back. Keyed `${user_id}:${week}` → { mood, lookingForward, shareText, photos }.
+  const [checkinByWeek, setCheckinByWeek] = useState({})
+  const [maxWeek, setMaxWeek] = useState(1)
 
   const load = useCallback(async () => {
     if (!active) { setLoading(false); return }
@@ -114,7 +118,19 @@ export function useCircle() {
     // you first, then alphabetical
     list.sort((a, b) => (a.you === b.you ? a.name.localeCompare(b.name) : a.you ? -1 : 1))
 
+    // Full history for the look-back: every check-in (any week) + shared photos,
+    // even weeks where someone only has photos and no check-in.
+    const history = {}
+    for (const [k, r] of Object.entries(moodByUserWeek)) {
+      history[k] = { mood: r.mood || '', lookingForward: r.looking_forward || '', shareText: r.share_text || '', photos: photosByUserWeek[k] || [] }
+    }
+    for (const [k, photos] of Object.entries(photosByUserWeek)) {
+      if (!history[k]) history[k] = { mood: '', lookingForward: '', shareText: '', photos }
+    }
+
     setMembers(list)
+    setCheckinByWeek(history)
+    setMaxWeek(list.reduce((m, p) => Math.max(m, p.week), 1))
     setLoading(false)
   }, [active, uid, cohortId])
 
@@ -133,5 +149,5 @@ export function useCircle() {
     return () => { supabase.removeChannel(channel) }
   }, [active, cohortId, load])
 
-  return { ready: active, loading, members, refresh: load }
+  return { ready: active, loading, members, checkinByWeek, maxWeek, refresh: load }
 }

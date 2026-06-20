@@ -62,7 +62,7 @@ export default function App() {
   const [acct, setAcct] = useState(false)
   const [copied, setCopied] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
-  const [showCheckin, setShowCheckin] = useState(false)
+  const [checkinReq, setCheckinReq] = useState(null) // null | { week?, seed? }
   const [showIdeas, setShowIdeas] = useState(false)
   const [weekPrompt, setWeekPrompt] = useState(null) // { from, to } | null
   const initAckRef = useRef(false)
@@ -93,7 +93,8 @@ export default function App() {
     setWeekPrompt(null)
   }
 
-  const openCheckin = () => setShowCheckin(true)
+  const openCheckin = () => setCheckinReq({})                       // current week
+  const openCheckinForWeek = (week, seed) => setCheckinReq({ week, seed }) // backfill a past week
   const openIdeas = () => setShowIdeas(true)
   const goToYou = () => setTab('you')
   // picking an idea fills this week's Artist Date plan, then closes the picker
@@ -123,7 +124,7 @@ export default function App() {
   if (configured && cohortLoading) return <Splash />
   if (configured && !hasCohort) return <Onboarding />
   if (configured && showProfile) return <Profile onBack={() => setShowProfile(false)} />
-  if (configured && showCheckin) return <Checkin me={me} setMe={setMe} track={track} onClose={() => setShowCheckin(false)} />
+  if (configured && checkinReq) return <Checkin me={me} setMe={setMe} track={track} presetWeek={checkinReq.week} presetSeed={checkinReq.seed} onClose={() => setCheckinReq(null)} />
   if (showIdeas) return (
     <div className="app-frame">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 'calc(env(safe-area-inset-top) + 14px) 18px 4px', flexShrink: 0 }}>
@@ -211,7 +212,7 @@ export default function App() {
       <div className="app-scroll">
         {tab === 'today' && <Today me={me} setMe={setMe} track={track} notes={notes} photos={photos} name={myName} openDetail={setDetail} openCheckin={openCheckin} openIdeas={openIdeas} />}
         {tab === 'you' && <Journey me={me} setMe={setMe} notes={notes} photos={photos} openDetail={setDetail} />}
-        {tab === 'group' && <Group me={me} openCheckin={openCheckin} goToYou={goToYou} />}
+        {tab === 'group' && <Group me={me} openCheckin={openCheckin} openCheckinForWeek={openCheckinForWeek} goToYou={goToYou} />}
       </div>
 
       {/* bottom tabs */}

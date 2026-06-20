@@ -25,26 +25,38 @@ function Field({ label, optional, value, onChange, placeholder, rows = 3 }) {
   )
 }
 
-export default function Checkin({ me, setMe, track, onClose }) {
+export default function Checkin({ me, setMe, track, onClose, presetWeek, presetSeed }) {
   // Backend mode keeps a local draft, seeded once from the saved row, and only
   // writes to the circle on "Share". Local mode reads/writes me.checkin directly.
+  // presetWeek (+ presetSeed) backfills/edits a PAST week from Circle's look-back.
   const t = track && track.ready ? track : null
+  const isPast = presetWeek != null
   const [justShared, setJustShared] = useState(false)
   const [draft, setDraft] = useState({ mood: '', forward: '', win: '' })
   const [draftShared, setDraftShared] = useState(false)
   const seeded = useRef(false)
 
   useEffect(() => {
-    if (!t || seeded.current || t.loading) return
+    if (seeded.current) return
+    if (isPast) {
+      seeded.current = true
+      const s = presetSeed || {}
+      if (s.mood || s.forward || s.win) {
+        setDraft({ mood: s.mood || '', forward: s.forward || '', win: s.win || '' })
+        setDraftShared(true)
+      }
+      return
+    }
+    if (!t || t.loading) return
     seeded.current = true
     if (t.checkin) {
       setDraft({ mood: t.checkin.mood || '', forward: t.checkin.looking_forward || '', win: t.checkin.share_text || '' })
       setDraftShared(true)
     }
-  }, [t, t?.loading, t?.checkin])
+  }, [isPast, presetSeed, t, t?.loading, t?.checkin])
 
   const ci = t ? { ...draft, shared: draftShared } : me.checkin
-  const weekN = t ? t.week : WEEK.n
+  const weekN = isPast ? presetWeek : (t ? t.week : WEEK.n)
 
   const setCI = (patch) => {
     if (t) { setDraft((d) => ({ ...d, ...patch })); setDraftShared(false) }
@@ -55,7 +67,7 @@ export default function Checkin({ me, setMe, track, onClose }) {
     else setMe((m) => ({ ...m, checkin: { ...m.checkin, mood: m.checkin.mood === key ? '' : key, shared: false } }))
   }
   const share = async () => {
-    if (t) { await t.saveCheckin({ mood: draft.mood, forward: draft.forward, win: draft.win }); setDraftShared(true) }
+    if (t) { await t.saveCheckin({ mood: draft.mood, forward: draft.forward, win: draft.win, week: isPast ? presetWeek : undefined }); setDraftShared(true) }
     else setMe((m) => ({ ...m, checkin: { ...m.checkin, shared: true } }))
     setJustShared(true)
     setTimeout(() => setJustShared(false), 2200)
@@ -73,9 +85,9 @@ export default function Checkin({ me, setMe, track, onClose }) {
       )}
       <div className={onClose ? 'app-scroll' : undefined} style={{ padding: '6px 20px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ padding: '6px 2px 0' }}>
-        <MonoLabel>Check-in before Sunday @ 19:00</MonoLabel>
+        <MonoLabel>{isPast ? `Week ${weekN} check-in` : 'Check-in before Sunday @ 19:00'}</MonoLabel>
         <h1 style={{ fontFamily: SERIF, fontSize: 27, fontWeight: 500, color: C.ink, lineHeight: 1.2, margin: '8px 0 0' }}>
-          How was your week {weekN}?
+          {isPast ? `Looking back on Week ${weekN}` : `How was your week ${weekN}?`}
         </h1>
         <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.mid, marginTop: 6 }}>
           A few honest lines. Only what you choose is shared.
@@ -126,8 +138,8 @@ export default function Checkin({ me, setMe, track, onClose }) {
         </button>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 18 }}>
           {justShared
-            ? <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: ACCENT }}>kept — see you Sunday.</span>
-            : <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>You can change this any time before Sunday evening.</span>}
+            ? <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: ACCENT }}>{isPast ? 'kept.' : 'kept — see you Sunday.'}</span>
+            : <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>{isPast ? 'You can change this any time.' : 'You can change this any time before Sunday evening.'}</span>}
         </div>
       </div>
       </div>
