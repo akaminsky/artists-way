@@ -12,13 +12,17 @@ const MOOD_STYLE = 'full'
 export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) {
   const circle = useCircle()
   const [openId, setOpenId] = useState(null)
-  // Look-back: null = "This week" (the live dashboard); a number = that past
-  // program week, showing everyone's check-in for it. Only when the backend's live.
-  const [viewWeek, setViewWeek] = useState(null)
+  // Look-back: a RELATIVE offset. 0 = "This week" (the live dashboard); -1 =
+  // "Previous week", showing each person on THEIR own week minus one (so Ines on
+  // week 4 shows her week 3, you on week 2 show your week 1). We can step back as
+  // far as the most-advanced person can reach week 1. Only when the backend's live.
+  const [offset, setOffset] = useState(0)
   const maxWeek = circle.ready ? circle.maxWeek : WEEK.n
-  const canLookBack = circle.ready && maxWeek > 1
-  const stepBack = () => setViewWeek((w) => (w == null ? maxWeek - 1 : Math.max(1, w - 1)))
-  const stepFwd = () => setViewWeek((w) => (w == null ? null : w >= maxWeek - 1 ? null : w + 1))
+  const maxBack = maxWeek - 1
+  const canLookBack = circle.ready && maxBack >= 1
+  const stepBack = () => setOffset((o) => Math.max(-maxBack, o - 1))
+  const stepFwd = () => setOffset((o) => Math.min(0, o + 1))
+  const offsetLabel = offset === 0 ? 'This week' : offset === -1 ? 'Previous week' : `${-offset} weeks ago`
 
   // Real members when the backend's live; otherwise the local prototype seed.
   const people = circle.ready
@@ -138,7 +142,9 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
   // A past-week check-in card (look-back view). No live pages/date/work stats —
   // those only mean something for the current week — just that week's check-in.
   const PastPerson = ({ p }) => {
-    const ci = (circle.ready && circle.checkinByWeek[`${p.id}:${viewWeek}`]) || null
+    const shownWeek = p.week + offset // this person's own week at the current offset
+    const valid = shownWeek >= 1
+    const ci = (valid && circle.ready && circle.checkinByWeek[`${p.id}:${shownWeek}`]) || null
     const has = Boolean(ci && (ci.mood || ci.lookingForward || ci.shareText || (ci.photos && ci.photos.length)))
     const mood = moodByKey(ci?.mood)
     const seed = ci ? { mood: ci.mood, forward: ci.lookingForward, win: ci.shareText } : {}
@@ -154,12 +160,12 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
               <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 500, color: C.ink }}>{p.name}</span>
               {p.you && <MonoLabel color={ACCENT}>you</MonoLabel>}
             </div>
-            <MonoLabel style={{ display: 'block', marginTop: 3 }}>Week {viewWeek} / {WEEK.total}</MonoLabel>
+            <MonoLabel style={{ display: 'block', marginTop: 3 }}>{valid ? `Week ${shownWeek} / ${WEEK.total}` : 'Not started yet'}</MonoLabel>
           </div>
           {ci?.mood && <MoodChip mood={mood} style={MOOD_STYLE} small />}
         </div>
 
-        {has ? (
+        {!valid ? null : has ? (
           <div style={{ marginTop: 16, paddingTop: 14, paddingLeft: 52, borderTop: `1px solid ${C.hair}`, display: 'flex', flexDirection: 'column', gap: 14 }}>
             {ci.lookingForward && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -180,7 +186,7 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
               </div>
             )}
             {p.you && openCheckinForWeek && (
-              <button onClick={() => openCheckinForWeek(viewWeek, seed)}
+              <button onClick={() => openCheckinForWeek(shownWeek, seed)}
                 style={{ alignSelf: 'flex-start', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5, WebkitTapHighlightColor: 'transparent' }}>
                 <span style={{ fontFamily: SERIF, fontSize: 13.5, fontStyle: 'italic', color: ACCENT }}>Edit your check-in</span>
                 <Icon name="chevR" size={14} stroke={ACCENT} />
@@ -190,10 +196,10 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
         ) : (
           <div style={{ marginTop: 14, paddingTop: 12, paddingLeft: 52, borderTop: `1px solid ${C.hair}` }}>
             {p.you && openCheckinForWeek ? (
-              <button onClick={() => openCheckinForWeek(viewWeek, seed)}
+              <button onClick={() => openCheckinForWeek(shownWeek, seed)}
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, WebkitTapHighlightColor: 'transparent' }}>
                 <Icon name="pen" size={15} stroke={ACCENT} sw={1.7} />
-                <span style={{ fontFamily: SERIF, fontSize: 14, color: ACCENT }}>Add your check-in for Week {viewWeek}</span>
+                <span style={{ fontFamily: SERIF, fontSize: 14, color: ACCENT }}>Add your check-in for Week {shownWeek}</span>
               </button>
             ) : (
               <span style={{ fontFamily: SERIF, fontSize: 14, fontStyle: 'italic', color: C.muted }}>No check-in</span>
@@ -223,21 +229,21 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
           </div>
           {canLookBack && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4, flexShrink: 0 }}>
-              <StepBtn onClick={stepBack} disabled={viewWeek != null && viewWeek <= 1} icon="chevL" />
-              <span style={{ fontFamily: SERIF, fontSize: 14, color: C.ink, minWidth: 64, textAlign: 'center' }}>
-                {viewWeek == null ? 'This week' : `Week ${viewWeek}`}
+              <StepBtn onClick={stepBack} disabled={offset <= -maxBack} icon="chevL" />
+              <span style={{ fontFamily: SERIF, fontSize: 14, color: C.ink, minWidth: 92, textAlign: 'center' }}>
+                {offsetLabel}
               </span>
-              <StepBtn onClick={stepFwd} disabled={viewWeek == null} icon="chevR" />
+              <StepBtn onClick={stepFwd} disabled={offset === 0} icon="chevR" />
             </div>
           )}
         </div>
         <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.mid, marginTop: 6 }}>
-          {viewWeek == null ? 'Where everyone is this week.' : `Looking back at Week ${viewWeek}.`}
+          {offset === 0 ? 'Where everyone is this week.' : 'Each person on their own week.'}
         </p>
       </div>
 
       {/* Your weekly check-in — composed here, where the circle lives */}
-      {viewWeek == null && openCheckin && (
+      {offset === 0 && openCheckin && (
         !myCheckedIn ? (
           <button onClick={openCheckin}
             style={{ width: '100%', textAlign: 'left', background: C.card, borderRadius: 14, border: 'none',
@@ -268,13 +274,13 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
         </p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {viewWeek == null
+          {offset === 0
             ? people.map((p) => <Person key={p.id} p={p} />)
             : people.map((p) => <PastPerson key={p.id} p={p} />)}
         </div>
       )}
 
-      {viewWeek == null && (
+      {offset === 0 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 22, opacity: 0.8 }}>
           <Icon name="circle3" size={15} stroke={C.muted} />
           <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>Sunday’s check-in brings you back together.</span>
