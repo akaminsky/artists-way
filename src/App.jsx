@@ -1,10 +1,11 @@
 // tend — app shell: app bar, screens, bottom tabs, detail sheet.
 // Single device, full viewport (the design prototype showed four phones on a
 // presentation stage; this is one real instance you install to the home screen).
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { C, SERIF, SANS, MONO, ACCENT } from './lib/theme'
 import { Icon, Avatar } from './components/primitives'
 import DetailSheet from './components/DetailSheet'
+import WeekTransitionSheet from './components/WeekTransitionSheet'
 import Today from './screens/Today'
 import Journey from './screens/Journey'
 import Group from './screens/Group'
@@ -17,6 +18,7 @@ import { ME, WEEK } from './data/seed'
 import { useAuth } from './lib/auth'
 import { useCohort } from './lib/cohort'
 import { useTracking } from './lib/tracking'
+import { startedOnForWeek } from './lib/week'
 import { useNotes } from './lib/notes'
 import { usePhotos } from './lib/photos'
 import { inviteUrl } from './lib/invite'
@@ -50,7 +52,7 @@ function Splash() {
 
 export default function App() {
   const { configured, ready, session, profile, signOut } = useAuth()
-  const { loading: cohortLoading, hasCohort, cohort } = useCohort()
+  const { loading: cohortLoading, hasCohort, cohort, membership, updateMembership } = useCohort()
   const track = useTracking()
   const notes = useNotes()
   const photos = usePhotos()
@@ -62,6 +64,34 @@ export default function App() {
   const [showProfile, setShowProfile] = useState(false)
   const [showCheckin, setShowCheckin] = useState(false)
   const [showIdeas, setShowIdeas] = useState(false)
+  const [weekPrompt, setWeekPrompt] = useState(null) // { from, to } | null
+  const initAckRef = useRef(false)
+
+  // "A new week" prompt. Weeks are derived from started_on; the first time the
+  // derived week climbs above the week you last acknowledged, ask whether to
+  // move on (default) or stay. acknowledged_week NULL = not yet initialized:
+  // silently set it to today's week so nobody is prompted the moment this ships.
+  const derivedWeek = track.ready ? track.week : null
+  const ackWeek = membership?.acknowledged_week ?? null
+  const paused = Boolean(membership?.paused_at)
+  useEffect(() => {
+    if (!configured || !hasCohort || !membership || derivedWeek == null) return
+    if (ackWeek == null) {
+      if (!initAckRef.current) { initAckRef.current = true; updateMembership({ acknowledged_week: derivedWeek }) }
+      return
+    }
+    if (!paused && derivedWeek > ackWeek) setWeekPrompt({ from: ackWeek, to: derivedWeek })
+    else setWeekPrompt(null)
+  }, [configured, hasCohort, membership, derivedWeek, ackWeek, paused, updateMembership])
+
+  // Move on: record the new week as acknowledged (week is already there).
+  const continueWeek = () => { if (weekPrompt) updateMembership({ acknowledged_week: weekPrompt.to }); setWeekPrompt(null) }
+  // Stay: re-anchor started_on back to the week you were on (same as set-week /
+  // resume); it'll ask again next week. acknowledged stays at that week.
+  const stayWeek = () => {
+    if (weekPrompt) updateMembership({ started_on: startedOnForWeek(weekPrompt.from), acknowledged_week: weekPrompt.from })
+    setWeekPrompt(null)
+  }
 
   const openCheckin = () => setShowCheckin(true)
   const openIdeas = () => setShowIdeas(true)
@@ -209,6 +239,16 @@ export default function App() {
           detail={detail}
           onSave={(note) => detail.save && detail.save(note)}
           onClose={() => setDetail(null)}
+        />
+      )}
+
+      {/* "a new week" prompt — move on (default) or stay on the prior week */}
+      {weekPrompt && (
+        <WeekTransitionSheet
+          from={weekPrompt.from}
+          to={weekPrompt.to}
+          onContinue={continueWeek}
+          onStay={stayWeek}
         />
       )}
     </div>
