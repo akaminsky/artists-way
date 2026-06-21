@@ -227,7 +227,13 @@ export default function Journey({ me, setMe, notes, photos, openDetail }) {
             </Block>
 
             <Block label={`Photos${wPhotos.length ? ` · ${wPhotos.length}` : ''}`}>
-              {wPhotos.length === 0 ? dash : (
+              {/* On the journal (You), you can add a photo to this week or any
+                  past week (a memory is often uploaded later) — but not a future
+                  week. Future / prototype mode stays read-only. */}
+              {photos?.ready && !future ? (
+                <PhotoStrip photos={wPhotos} onAdd={(file) => photos.addPhoto(file, viewWeek)}
+                  onToggleShare={photos.toggleShare} onDelete={photos.deletePhoto} size={64} />
+              ) : wPhotos.length === 0 ? dash : (
                 <PhotoStrip photos={wPhotos} onToggleShare={photos.toggleShare} onDelete={photos.deletePhoto} size={64} />
               )}
             </Block>
