@@ -2,7 +2,7 @@
 // Shown only when Supabase is configured and there is no session. One field,
 // one tap on the emailed link, then the session persists basically forever.
 import { useState } from 'react'
-import { C, SERIF, SANS, MONO, ACCENT } from '../lib/theme'
+import { C, SERIF, SANS, MONO, ACCENT, ON_ACCENT } from '../lib/theme'
 import { useAuth } from '../lib/auth'
 
 export default function SignIn() {
@@ -87,7 +87,7 @@ export default function SignIn() {
                 type="submit" disabled={!valid || busy}
                 style={{
                   width: '100%', border: 'none', borderRadius: 14, padding: '15px',
-                  background: ACCENT, color: C.card, fontFamily: SERIF, fontSize: 16.5, fontWeight: 500,
+                  background: ACCENT, color: ON_ACCENT, fontFamily: SERIF, fontSize: 16.5, fontWeight: 500,
                   cursor: valid && !busy ? 'pointer' : 'default', opacity: valid && !busy ? 1 : 0.5,
                   transition: 'opacity 0.2s ease', boxShadow: '0 6px 16px rgba(138,94,126,0.22)',
                 }}>
@@ -124,7 +124,7 @@ export default function SignIn() {
                 type="submit" disabled={!codeValid || busy}
                 style={{
                   width: '100%', border: 'none', borderRadius: 14, padding: '15px',
-                  background: ACCENT, color: C.card, fontFamily: SERIF, fontSize: 16.5, fontWeight: 500,
+                  background: ACCENT, color: ON_ACCENT, fontFamily: SERIF, fontSize: 16.5, fontWeight: 500,
                   cursor: codeValid && !busy ? 'pointer' : 'default', opacity: codeValid && !busy ? 1 : 0.5,
                   transition: 'opacity 0.2s ease', boxShadow: '0 6px 16px rgba(138,94,126,0.22)',
                 }}>

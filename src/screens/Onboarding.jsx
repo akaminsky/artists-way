@@ -3,7 +3,7 @@
 // code, or it's pre-filled from an invite link). Same warm, centered language
 // as the sign-in screen.
 import { useState } from 'react'
-import { C, SERIF, SANS, MONO, ACCENT, ACCENT_SOFT } from '../lib/theme'
+import { C, SERIF, SANS, MONO, ACCENT, ACCENT_SOFT, ON_ACCENT } from '../lib/theme'
 import { useCohort } from '../lib/cohort'
 import { getPendingInvite, clearPendingInvite, inviteUrl } from '../lib/invite'
 
@@ -14,7 +14,7 @@ const field = {
 }
 const primaryBtn = (enabled) => ({
   width: '100%', border: 'none', borderRadius: 14, padding: '15px',
-  background: ACCENT, color: C.card, fontFamily: SERIF, fontSize: 16.5, fontWeight: 500,
+  background: ACCENT, color: ON_ACCENT, fontFamily: SERIF, fontSize: 16.5, fontWeight: 500,
   cursor: enabled ? 'pointer' : 'default', opacity: enabled ? 1 : 0.5,
   transition: 'opacity 0.2s ease', boxShadow: '0 6px 16px rgba(138,94,126,0.22)',
 })

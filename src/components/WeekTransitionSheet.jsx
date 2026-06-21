@@ -3,7 +3,7 @@
 // to stay on the week you were on a little longer (re-anchors started_on, the
 // same move as Profile's set-week / resume). Dismissing = move on.
 import { useEffect, useState } from 'react'
-import { C, SERIF, SANS, ACCENT } from '../lib/theme'
+import { C, SERIF, SANS, ACCENT, ON_ACCENT } from '../lib/theme'
 import { MonoLabel } from './primitives'
 import { themeForWeek } from '../data/weeks'
 
@@ -48,7 +48,7 @@ export default function WeekTransitionSheet({ from, to, onContinue, onStay }) {
         <button onClick={onContinue}
           style={{
             width: '100%', border: 'none', cursor: 'pointer', borderRadius: 13, padding: '14px 18px',
-            background: ACCENT, color: C.card, fontFamily: SERIF, fontSize: 16, fontWeight: 500,
+            background: ACCENT, color: ON_ACCENT, fontFamily: SERIF, fontSize: 16, fontWeight: 500,
             WebkitTapHighlightColor: 'transparent',
           }}>
           Start Week {to}

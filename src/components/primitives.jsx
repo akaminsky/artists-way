@@ -1,5 +1,5 @@
 // tend — shared primitives + icons (ported from the design prototype)
-import { C, SERIF, MONO, ACCENT, ACCENT_SOFT } from '../lib/theme'
+import { C, SERIF, MONO, ACCENT, ACCENT_SOFT, ON_ACCENT } from '../lib/theme'
 
 // ── Line icons (1.6 stroke, calm) ─────────────────────
 export function Icon({ name, size = 20, stroke = C.mid, sw = 1.6, fill = 'none', style = {} }) {
@@ -63,7 +63,7 @@ export function Checkbox({ checked, onClick, size = 28 }) {
         boxShadow: checked ? '0 1px 4px rgba(138,94,126,0.35)' : 'none',
       }}>
         <span style={{ transform: checked ? 'scale(1)' : 'scale(0.4)', opacity: checked ? 1 : 0, transition: 'all 0.22s ease-in-out' }}>
-          <Icon name="check" size={size * 0.62} stroke={C.card} sw={2.4} />
+          <Icon name="check" size={size * 0.62} stroke={ON_ACCENT} sw={2.4} />
         </span>
       </span>
     </button>

@@ -1,6 +1,6 @@
 // tend — Screen 4: Weekly check-in
 import { useState, useEffect, useRef } from 'react'
-import { C, SERIF, ACCENT } from '../lib/theme'
+import { C, SERIF, ACCENT, ON_ACCENT } from '../lib/theme'
 import { Icon, MonoLabel, MoodGlyph } from '../components/primitives'
 import { WEEK, MOODS } from '../data/seed'
 
@@ -128,7 +128,7 @@ export default function Checkin({ me, setMe, track, onClose, presetWeek, presetS
         <button onClick={share} disabled={!ci.mood && !ci.forward && !ci.win}
           style={{
             width: '100%', border: 'none', borderRadius: 14, padding: '15px',
-            background: ci.shared ? C.inset : ACCENT, color: ci.shared ? ACCENT : C.card,
+            background: ci.shared ? C.inset : ACCENT, color: ci.shared ? ACCENT : ON_ACCENT,
             fontFamily: SERIF, fontSize: 16.5, fontWeight: 500, cursor: 'pointer',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             transition: 'all 0.22s ease', opacity: (!ci.mood && !ci.forward && !ci.win) ? 0.5 : 1,

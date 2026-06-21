@@ -33,6 +33,7 @@
 
   /* Accent */
   --color-accent:           #C5623F;  /* burnt sienna / terracotta               */
+  --c-on-accent:            #FBF6EB;  /* light fg on accent — same in both modes */
 
   /* Separators (alpha-based; represent as solid equivalents) */
   --color-separator:        rgba(28, 24, 20, 0.10);

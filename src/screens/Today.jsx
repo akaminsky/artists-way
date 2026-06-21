@@ -1,6 +1,6 @@
 // tend — Screen 1: Daily home (the solo practice, by cadence: today + this week)
 import { useState } from 'react'
-import { C, SERIF, ACCENT, ACCENT_SOFT } from '../lib/theme'
+import { C, SERIF, ACCENT, ACCENT_SOFT, ON_ACCENT } from '../lib/theme'
 import { Icon, MonoLabel, Checkbox, PagesStrip } from '../components/primitives'
 import { PhotoStrip } from '../components/Photos'
 import { WEEK, DAY_LETTERS, EXERCISES } from '../data/seed'
@@ -250,7 +250,7 @@ export default function Today({ me, setMe, track, notes, photos, name, openDetai
           />
           <button onClick={addNote} disabled={!noteDraft.trim()}
             style={{ alignSelf: 'flex-start', border: 'none', borderRadius: 11, padding: '9px 17px',
-              background: noteDraft.trim() ? ACCENT : C.inset, color: noteDraft.trim() ? C.card : C.muted,
+              background: noteDraft.trim() ? ACCENT : C.inset, color: noteDraft.trim() ? ON_ACCENT : C.muted,
               fontFamily: SERIF, fontSize: 14.5, fontWeight: 500, cursor: noteDraft.trim() ? 'pointer' : 'default',
               WebkitTapHighlightColor: 'transparent' }}>
             Add note

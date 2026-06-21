@@ -1,6 +1,6 @@
 // tend — Screen 5: Artist Date ideas (your backlog + the shared well)
 import { useState } from 'react'
-import { C, SERIF, SANS, MONO, ACCENT, ACCENT_SOFT } from '../lib/theme'
+import { C, SERIF, SANS, MONO, ACCENT, ACCENT_SOFT, ON_ACCENT } from '../lib/theme'
 import { Icon, Checkbox, MonoLabel } from '../components/primitives'
 import { IDEAS, IDEA_CATEGORIES, IDEA_COSTS, IDEA_SETTINGS, IDEA_SOCIAL } from '../data/seed'
 import { useIdeas } from '../lib/ideas'
@@ -196,7 +196,7 @@ export default function Ideas({ me, setMe, onPick }) {
               Cancel
             </button>
             <button onClick={saveDraft} disabled={!draft.title.trim()}
-              style={{ flex: 1, background: ACCENT, border: 'none', borderRadius: 12, padding: '12px', cursor: 'pointer', fontFamily: SERIF, fontSize: 15, fontWeight: 500, color: C.card, opacity: draft.title.trim() ? 1 : 0.5 }}>
+              style={{ flex: 1, background: ACCENT, border: 'none', borderRadius: 12, padding: '12px', cursor: 'pointer', fontFamily: SERIF, fontSize: 15, fontWeight: 500, color: ON_ACCENT, opacity: draft.title.trim() ? 1 : 0.5 }}>
               Keep it
             </button>
           </div>

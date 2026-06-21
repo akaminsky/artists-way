@@ -1,6 +1,6 @@
 // tend — Detail sheet (private note / answer). Slides up over the app.
 import { useState, useEffect, useRef } from 'react'
-import { C, SERIF, ACCENT } from '../lib/theme'
+import { C, SERIF, ACCENT, ON_ACCENT } from '../lib/theme'
 import { Icon, MonoLabel } from './primitives'
 
 export default function DetailSheet({ detail, onSave, onClose }) {
@@ -63,7 +63,7 @@ export default function DetailSheet({ detail, onSave, onClose }) {
           <button onClick={save} disabled={saved}
             style={{
               border: 'none', cursor: 'pointer', borderRadius: 12, padding: '11px 20px',
-              background: saved ? 'transparent' : ACCENT, color: saved ? ACCENT : C.card,
+              background: saved ? 'transparent' : ACCENT, color: saved ? ACCENT : ON_ACCENT,
               fontFamily: SERIF, fontSize: 15, fontWeight: 500,
               display: 'inline-flex', alignItems: 'center', gap: 7, transition: 'all 0.22s ease',
             }}>

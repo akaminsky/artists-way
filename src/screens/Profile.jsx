@@ -4,7 +4,7 @@
 // name, set/pause your week (combined), copy the invite link, leave the circle,
 // sign out.
 import { useState } from 'react'
-import { C, SERIF, SANS, MONO, ACCENT } from '../lib/theme'
+import { C, SERIF, SANS, MONO, ACCENT, ON_ACCENT } from '../lib/theme'
 import { Icon, MonoLabel, Avatar } from '../components/primitives'
 import { useAuth } from '../lib/auth'
 import { useCohort } from '../lib/cohort'
@@ -179,7 +179,7 @@ export default function Profile({ onBack }) {
                   Cancel
                 </button>
                 <button onClick={doLeave} disabled={busy}
-                  style={{ flex: 1, background: RED, border: 'none', borderRadius: 12, padding: '11px', cursor: 'pointer', fontFamily: SERIF, fontSize: 15, fontWeight: 500, color: C.card, opacity: busy ? 0.6 : 1 }}>
+                  style={{ flex: 1, background: RED, border: 'none', borderRadius: 12, padding: '11px', cursor: 'pointer', fontFamily: SERIF, fontSize: 15, fontWeight: 500, color: ON_ACCENT, opacity: busy ? 0.6 : 1 }}>
                   Leave circle
                 </button>
               </div>
