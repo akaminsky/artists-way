@@ -13,6 +13,26 @@ import { useAuth } from './auth'
 import { useCohort } from './cohort'
 import { memberWeek, currentWeekDates, weekdayIndex } from './week'
 
+// App-side check-in shape: values keyed mood/moodNote/forward/significant/share,
+// plus a per-field `shares` boolean map. `null` when there's no check-in yet.
+function shapeCheckin(row) {
+  if (!row) return null
+  return {
+    mood: row.mood || '',
+    moodNote: row.mood_note || '',
+    forward: row.looking_forward || '',
+    significant: row.significant_issues || '',
+    share: row.share_text || '',
+    shares: {
+      mood: row.share_mood ?? true,
+      moodNote: row.share_mood_note ?? false,
+      forward: row.share_looking_forward ?? false,
+      significant: row.share_significant_issues ?? false,
+      share: row.share_share_text ?? false,
+    },
+  }
+}
+
 export function useTracking() {
   const { session } = useAuth()
   const { membership } = useCohort()
@@ -48,14 +68,15 @@ export function useTracking() {
         .eq('user_id', uid).eq('week', week).maybeSingle(),
       supabase.from('exercises').select('id,label,prompt,sort')
         .eq('week', week).order('sort'),
-      supabase.from('weekly_checkins').select('mood, looking_forward, share_text')
+      supabase.from('weekly_checkin_details')
+        .select('mood, mood_note, looking_forward, significant_issues, share_text, share_mood, share_mood_note, share_looking_forward, share_significant_issues, share_share_text')
         .eq('user_id', uid).eq('week', week).maybeSingle(),
     ])
 
     setDoneDates(new Set((pagesRes.data ?? []).map((r) => r.date)))
     setArtistDone(Boolean(adRes.data))
     setArtistPlan(detailRes.data?.what_i_did ?? '')
-    setCheckin(ciRes.data ?? null)
+    setCheckin(shapeCheckin(ciRes.data))
 
     // Pull this user's progress + answers for just this week's exercise ids.
     const catalog = exRes.data ?? []
@@ -161,19 +182,54 @@ export function useTracking() {
     if (results.some((r) => r.error)) load()
   }, [active, uid, cohortId, load])
 
-  // ── Weekly check-in: write becomes visible to the circle ──
-  // Defaults to the current week; pass `week` to backfill/edit a past week (from
-  // Circle's look-back). Only the current week's row is held in local state.
-  const saveCheckin = useCallback(async ({ mood, forward, win, week: targetWeek } = {}) => {
-    if (!active) return
+  // ── Weekly check-in: per-field privacy ──
+  // Writes the FULL check-in to the private details table (source of truth), and
+  // a SHARED projection to weekly_checkins holding only the fields you flagged
+  // shared (the rest go null, so the circle can't read them). `values` keys:
+  // mood/moodNote/forward/significant/share; `shares` is the matching bool map.
+  // Defaults to the current week; pass `week` to backfill a past week.
+  const saveCheckin = useCallback(async ({ values = {}, shares = {}, week: targetWeek } = {}) => {
+    if (!active) return { error: new Error('not ready') }
     const w = targetWeek ?? week
-    const next = { mood: mood || null, looking_forward: forward || null, share_text: win || null }
-    if (w === week) setCheckin(next)
-    const res = await supabase.from('weekly_checkins')
-      .upsert({ user_id: uid, cohort_id: cohortId, week: w, ...next, updated_at: new Date().toISOString() }, { onConflict: 'user_id,week' })
-    if (res.error && w === week) load()
-    return res
+    const now = new Date().toISOString()
+    const detail = {
+      user_id: uid, week: w,
+      mood: values.mood || null, mood_note: values.moodNote || null,
+      looking_forward: values.forward || null, significant_issues: values.significant || null,
+      share_text: values.share || null,
+      share_mood: !!shares.mood, share_mood_note: !!shares.moodNote,
+      share_looking_forward: !!shares.forward, share_significant_issues: !!shares.significant,
+      share_share_text: !!shares.share,
+      updated_at: now,
+    }
+    // shared projection — only flagged fields survive
+    const shared = {
+      user_id: uid, cohort_id: cohortId, week: w,
+      mood: shares.mood ? (values.mood || null) : null,
+      mood_note: shares.moodNote ? (values.moodNote || null) : null,
+      looking_forward: shares.forward ? (values.forward || null) : null,
+      significant_issues: shares.significant ? (values.significant || null) : null,
+      share_text: shares.share ? (values.share || null) : null,
+      updated_at: now,
+    }
+    if (w === week) setCheckin({ mood: detail.mood || '', moodNote: detail.mood_note || '', forward: detail.looking_forward || '', significant: detail.significant_issues || '', share: detail.share_text || '', shares: { ...shares } })
+    const [d, sh] = await Promise.all([
+      supabase.from('weekly_checkin_details').upsert(detail, { onConflict: 'user_id,week' }),
+      supabase.from('weekly_checkins').upsert(shared, { onConflict: 'user_id,week' }),
+    ])
+    if ((d.error || sh.error) && w === week) load()
+    return { error: d.error || sh.error }
   }, [active, uid, cohortId, week, load])
+
+  // Load a specific week's FULL private check-in (for editing/backfilling a past
+  // week from Circle's look-back). Returns the app-shaped object or null.
+  const getCheckin = useCallback(async (w) => {
+    if (!active) return null
+    const { data } = await supabase.from('weekly_checkin_details')
+      .select('mood, mood_note, looking_forward, significant_issues, share_text, share_mood, share_mood_note, share_looking_forward, share_significant_issues, share_share_text')
+      .eq('user_id', uid).eq('week', w).maybeSingle()
+    return shapeCheckin(data)
+  }, [active, uid])
 
   const pages = weekDates.map((d) => doneDates.has(d))
 
@@ -184,6 +240,7 @@ export function useTracking() {
     // weekly check-in
     checkin,
     saveCheckin,
+    getCheckin,
     // morning pages
     pages,
     todayIndex,

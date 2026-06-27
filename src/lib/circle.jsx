@@ -36,7 +36,7 @@ export function useCircle() {
       supabase.from('artist_dates').select('user_id, week').eq('cohort_id', cohortId),
       supabase.from('exercises').select('id, week'),
       supabase.from('exercise_progress').select('user_id, exercise_id').eq('cohort_id', cohortId).eq('completed', true),
-      supabase.from('weekly_checkins').select('user_id, week, mood, looking_forward, share_text, created_at').eq('cohort_id', cohortId),
+      supabase.from('weekly_checkins').select('user_id, week, mood, mood_note, looking_forward, significant_issues, share_text, created_at').eq('cohort_id', cohortId),
       supabase.from('week_photos').select('user_id, week, storage_path').eq('cohort_id', cohortId).eq('shared', true),
     ])
 
@@ -110,7 +110,9 @@ export function useCircle() {
         exercises: exDoneByUserWeek[`${m.user_id}:${week}`] || 0,
         exercisesTotal: exTotalByWeek[week] || 0,
         mood: ci?.mood || '',
+        moodNote: ci?.mood_note || '',
         lookingForward: ci?.looking_forward || '',
+        significantIssues: ci?.significant_issues || '',
         shareText: ci?.share_text || '',
         photos: photosByUserWeek[`${m.user_id}:${week}`] || [],
       }
@@ -122,10 +124,10 @@ export function useCircle() {
     // even weeks where someone only has photos and no check-in.
     const history = {}
     for (const [k, r] of Object.entries(moodByUserWeek)) {
-      history[k] = { mood: r.mood || '', lookingForward: r.looking_forward || '', shareText: r.share_text || '', photos: photosByUserWeek[k] || [] }
+      history[k] = { mood: r.mood || '', moodNote: r.mood_note || '', lookingForward: r.looking_forward || '', significantIssues: r.significant_issues || '', shareText: r.share_text || '', photos: photosByUserWeek[k] || [] }
     }
     for (const [k, photos] of Object.entries(photosByUserWeek)) {
-      if (!history[k]) history[k] = { mood: '', lookingForward: '', shareText: '', photos }
+      if (!history[k]) history[k] = { mood: '', moodNote: '', lookingForward: '', significantIssues: '', shareText: '', photos }
     }
 
     setMembers(list)

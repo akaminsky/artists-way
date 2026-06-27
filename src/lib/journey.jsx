@@ -30,7 +30,9 @@ export function useJourney() {
   const load = useCallback(async () => {
     if (!active) { setLoading(false); return }
     const [wcRes, adRes, adDetRes, exRes, ansRes, progRes, mpRes] = await Promise.all([
-      supabase.from('weekly_checkins').select('week, mood, looking_forward, share_text, created_at').eq('user_id', uid),
+      supabase.from('weekly_checkin_details')
+        .select('week, mood, mood_note, looking_forward, significant_issues, share_text, share_mood, share_mood_note, share_looking_forward, share_significant_issues, share_share_text, updated_at')
+        .eq('user_id', uid),
       supabase.from('artist_dates').select('week').eq('user_id', uid),
       supabase.from('artist_date_details').select('week, what_i_did').eq('user_id', uid),
       supabase.from('exercises').select('id, week, label'),
@@ -61,18 +63,23 @@ export function useJourney() {
     setPagesDays(daysByWeek)
     setPagesTotal(total)
 
-    // latest check-in per week → mood arc + the full check-in archive
-    const ciByWeek = {}
-    for (const r of (wcRes.data ?? [])) {
-      const prev = ciByWeek[r.week]
-      if (!prev || new Date(r.created_at) > new Date(prev.created_at)) ciByWeek[r.week] = r
-    }
+    // your full private check-in per week (one row each) → mood arc + archive.
+    // This is YOUR journal, so it shows every field regardless of share state;
+    // the per-field `shared` flags drive a small "shared" marker on You.
     const moodByWeek = {}
-    for (const r of Object.values(ciByWeek)) if (r.mood) moodByWeek[r.week] = r.mood
+    for (const r of (wcRes.data ?? [])) if (r.mood) moodByWeek[r.week] = r.mood
     setMoods(moodByWeek)
-    setCheckins(Object.values(ciByWeek)
-      .map((r) => ({ week: r.week, mood: r.mood || '', lookingForward: r.looking_forward || '', shareText: r.share_text || '' }))
-      .filter((c) => c.mood || c.lookingForward || c.shareText)
+    setCheckins((wcRes.data ?? [])
+      .map((r) => ({
+        week: r.week,
+        mood: r.mood || '',
+        moodNote: r.mood_note || '',
+        lookingForward: r.looking_forward || '',
+        significant: r.significant_issues || '',
+        shareText: r.share_text || '',
+        shared: { mood: r.share_mood, moodNote: r.share_mood_note, forward: r.share_looking_forward, significant: r.share_significant_issues, share: r.share_share_text },
+      }))
+      .filter((c) => c.mood || c.moodNote || c.lookingForward || c.significant || c.shareText)
       .sort((a, b) => b.week - a.week))
 
     // artist dates: any week that's marked done or has a written note

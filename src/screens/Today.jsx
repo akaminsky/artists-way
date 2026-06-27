@@ -99,7 +99,7 @@ export default function Today({ me, setMe, track, notes, photos, name, openDetai
   // Weekly check-in nudge: a gentle cross-link as Sunday's call nears (Fri–Sun),
   // only while you haven't shared yet. The check-in's real home is Circle.
   const checkedIn = t
-    ? Boolean(t.checkin && (t.checkin.mood || t.checkin.looking_forward || t.checkin.share_text))
+    ? Boolean(t.checkin && (t.checkin.mood || t.checkin.moodNote || t.checkin.forward || t.checkin.significant || t.checkin.share))
     : Boolean(me.checkin.shared)
   // Thu–Sat (Sunday-first index 4–6), as Sunday's call approaches
   const showCheckinNudge = Boolean(openCheckin) && weekdayIndex() >= 4 && !checkedIn

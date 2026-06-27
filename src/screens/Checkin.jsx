@@ -1,17 +1,40 @@
-// tend — Screen 4: Weekly check-in
+// tend — Screen 4: Weekly check-in (per-field privacy).
+// Each field can be Shared with the circle or kept Just for me. Default: only the
+// mood is shared; everything else starts private. The full check-in is saved to a
+// private table; only shared fields reach the circle (see tracking.saveCheckin).
 import { useState, useEffect, useRef } from 'react'
 import { C, SERIF, ACCENT, ON_ACCENT } from '../lib/theme'
 import { Icon, MonoLabel, MoodGlyph } from '../components/primitives'
 import { WEEK, MOODS } from '../data/seed'
 
-// Hoisted to module scope so the textarea keeps focus while typing
-// (defining it inside the screen would remount the field on every keystroke).
-function Field({ label, optional, value, onChange, placeholder, rows = 3 }) {
+const DEFAULT_SHARES = { mood: true, moodNote: false, forward: false, significant: false, share: false }
+const EMPTY_DRAFT = { mood: '', moodNote: '', forward: '', significant: '', share: '', shares: { ...DEFAULT_SHARES } }
+
+// Small "who can see this" toggle that sits with each field's label.
+function ShareToggle({ on, onClick }) {
+  return (
+    <button onClick={onClick} type="button"
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer', flexShrink: 0,
+        background: on ? 'var(--rs-accent-soft, rgba(138,94,126,0.12))' : C.inset,
+        border: `1px solid ${on ? ACCENT : C.hair}`, borderRadius: 999, padding: '5px 10px',
+        WebkitTapHighlightColor: 'transparent',
+      }}>
+      <Icon name={on ? 'circle3' : 'moon'} size={12} stroke={on ? ACCENT : C.muted} sw={1.7} />
+      <span style={{ fontFamily: SERIF, fontSize: 12.5, fontStyle: 'italic', color: on ? ACCENT : C.mid }}>
+        {on ? 'Shared with circle' : 'Just for me'}
+      </span>
+    </button>
+  )
+}
+
+// Hoisted so the textarea keeps focus while typing.
+function FieldRow({ label, value, onChange, placeholder, rows = 3, shareOn, onToggleShare }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: C.ink }}>{label}</span>
-        {optional && <MonoLabel>optional</MonoLabel>}
+        <ShareToggle on={shareOn} onClick={onToggleShare} />
       </div>
       <textarea
         value={value} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder}
@@ -25,52 +48,48 @@ function Field({ label, optional, value, onChange, placeholder, rows = 3 }) {
   )
 }
 
-export default function Checkin({ me, setMe, track, onClose, presetWeek, presetSeed }) {
-  // Backend mode keeps a local draft, seeded once from the saved row, and only
-  // writes to the circle on "Share". Local mode reads/writes me.checkin directly.
-  // presetWeek (+ presetSeed) backfills/edits a PAST week from Circle's look-back.
+export default function Checkin({ me, setMe, track, onClose, presetWeek }) {
   const t = track && track.ready ? track : null
   const isPast = presetWeek != null
-  const [justShared, setJustShared] = useState(false)
-  const [draft, setDraft] = useState({ mood: '', forward: '', win: '' })
-  const [draftShared, setDraftShared] = useState(false)
+  const [justSaved, setJustSaved] = useState(false)
+  const [draft, setDraft] = useState(EMPTY_DRAFT)
   const seeded = useRef(false)
 
+  // Seed once. Backend: load the full private record for this/the past week.
+  // Prototype: read the local me.checkin.
   useEffect(() => {
     if (seeded.current) return
-    if (isPast) {
-      seeded.current = true
-      const s = presetSeed || {}
-      if (s.mood || s.forward || s.win) {
-        setDraft({ mood: s.mood || '', forward: s.forward || '', win: s.win || '' })
-        setDraftShared(true)
+    if (t) {
+      if (isPast) {
+        seeded.current = true
+        track.getCheckin(presetWeek).then((c) => { if (c) setDraft({ ...EMPTY_DRAFT, ...c, shares: { ...DEFAULT_SHARES, ...c.shares } }) })
+        return
       }
+      if (t.loading) return
+      seeded.current = true
+      if (t.checkin) setDraft({ ...EMPTY_DRAFT, ...t.checkin, shares: { ...DEFAULT_SHARES, ...t.checkin.shares } })
       return
     }
-    if (!t || t.loading) return
+    // prototype
     seeded.current = true
-    if (t.checkin) {
-      setDraft({ mood: t.checkin.mood || '', forward: t.checkin.looking_forward || '', win: t.checkin.share_text || '' })
-      setDraftShared(true)
-    }
-  }, [isPast, presetSeed, t, t?.loading, t?.checkin])
+    const c = me?.checkin
+    if (c) setDraft({ ...EMPTY_DRAFT, mood: c.mood || '', moodNote: c.moodNote || '', forward: c.forward || '', significant: c.significant || '', share: c.win || c.share || '', shares: { ...DEFAULT_SHARES, ...(c.shares || {}) } })
+  }, [t, t?.loading, t?.checkin, isPast, presetWeek])
 
-  const ci = t ? { ...draft, shared: draftShared } : me.checkin
   const weekN = isPast ? presetWeek : (t ? t.week : WEEK.n)
+  const setVal = (patch) => setDraft((d) => ({ ...d, ...patch }))
+  const toggleShare = (key) => setDraft((d) => ({ ...d, shares: { ...d.shares, [key]: !d.shares[key] } }))
+  const pickMood = (key) => setDraft((d) => ({ ...d, mood: d.mood === key ? '' : key }))
+  const anything = draft.mood || draft.moodNote || draft.forward || draft.significant || draft.share
 
-  const setCI = (patch) => {
-    if (t) { setDraft((d) => ({ ...d, ...patch })); setDraftShared(false) }
-    else setMe((m) => ({ ...m, checkin: { ...m.checkin, ...patch, shared: false } }))
-  }
-  const pickMood = (key) => {
-    if (t) { setDraft((d) => ({ ...d, mood: d.mood === key ? '' : key })); setDraftShared(false) }
-    else setMe((m) => ({ ...m, checkin: { ...m.checkin, mood: m.checkin.mood === key ? '' : key, shared: false } }))
-  }
-  const share = async () => {
-    if (t) { await t.saveCheckin({ mood: draft.mood, forward: draft.forward, win: draft.win, week: isPast ? presetWeek : undefined }); setDraftShared(true) }
-    else setMe((m) => ({ ...m, checkin: { ...m.checkin, shared: true } }))
-    setJustShared(true)
-    setTimeout(() => setJustShared(false), 2200)
+  const save = async () => {
+    if (t) {
+      await t.saveCheckin({ values: draft, shares: draft.shares, week: isPast ? presetWeek : undefined })
+    } else {
+      setMe((m) => ({ ...m, checkin: { ...m.checkin, mood: draft.mood, moodNote: draft.moodNote, forward: draft.forward, significant: draft.significant, win: draft.share, shares: draft.shares, shared: true } }))
+    }
+    setJustSaved(true)
+    setTimeout(() => setJustSaved(false), 2200)
   }
 
   return (
@@ -90,16 +109,19 @@ export default function Checkin({ me, setMe, track, onClose, presetWeek, presetS
           {isPast ? `Looking back on Week ${weekN}` : `How was your week ${weekN}?`}
         </h1>
         <p style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: C.mid, marginTop: 6 }}>
-          A few honest lines. Only what you choose is shared.
+          A few honest lines. Each one is private unless you choose to share it.
         </p>
       </div>
 
-      {/* Mood picker */}
+      {/* Mood picker + its share toggle */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: C.ink }}>Where are you, honestly?</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 500, color: C.ink }}>Where are you, honestly?</span>
+          <ShareToggle on={draft.shares.mood} onClick={() => toggleShare('mood')} />
+        </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
           {MOODS.map((mood) => {
-            const on = ci.mood === mood.key
+            const on = draft.mood === mood.key
             return (
               <button key={mood.key} onClick={() => pickMood(mood.key)}
                 style={{
@@ -117,29 +139,39 @@ export default function Checkin({ me, setMe, track, onClose, presetWeek, presetS
         </div>
       </div>
 
-      <Field label="What I'm looking forward to" value={ci.forward} onChange={(v) => setCI({ forward: v })}
-        placeholder="the week ahead, something you’re circling toward…" rows={3} />
+      <FieldRow label="Say more about how you're feeling" value={draft.moodNote} onChange={(v) => setVal({ moodNote: v })}
+        placeholder="what's underneath the mood — a sentence or two…" rows={2}
+        shareOn={draft.shares.moodNote} onToggleShare={() => toggleShare('moodNote')} />
 
-      <Field label="Want to share something with the group?" optional value={ci.win} onChange={(v) => setCI({ win: v })}
-        placeholder="a win, an insight, an aha moment, a reflection — anything…" rows={2} />
+      <FieldRow label="What I'm looking forward to" value={draft.forward} onChange={(v) => setVal({ forward: v })}
+        placeholder="the week ahead, something you're circling toward…" rows={3}
+        shareOn={draft.shares.forward} onToggleShare={() => toggleShare('forward')} />
 
-      {/* Share */}
+      <FieldRow label="Anything significant for your recovery?" value={draft.significant} onChange={(v) => setVal({ significant: v })}
+        placeholder="other issues this week you felt mattered for your recovery…" rows={3}
+        shareOn={draft.shares.significant} onToggleShare={() => toggleShare('significant')} />
+
+      <FieldRow label="Want to share something with the group?" value={draft.share} onChange={(v) => setVal({ share: v })}
+        placeholder="a win, an insight, an aha moment, a reflection — anything…" rows={2}
+        shareOn={draft.shares.share} onToggleShare={() => toggleShare('share')} />
+
+      {/* Save */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 2 }}>
-        <button onClick={share} disabled={!ci.mood && !ci.forward && !ci.win}
+        <button onClick={save} disabled={!anything}
           style={{
             width: '100%', border: 'none', borderRadius: 14, padding: '15px',
-            background: ci.shared ? C.inset : ACCENT, color: ci.shared ? ACCENT : ON_ACCENT,
+            background: ACCENT, color: ON_ACCENT,
             fontFamily: SERIF, fontSize: 16.5, fontWeight: 500, cursor: 'pointer',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            transition: 'all 0.22s ease', opacity: (!ci.mood && !ci.forward && !ci.win) ? 0.5 : 1,
-            boxShadow: ci.shared ? 'none' : '0 6px 16px rgba(138,94,126,0.22)',
+            transition: 'all 0.22s ease', opacity: anything ? 1 : 0.5,
+            boxShadow: '0 6px 16px rgba(138,94,126,0.22)',
           }}>
-          {ci.shared ? <><Icon name="check" size={17} stroke={ACCENT} sw={2.2} /> Shared with the circle</> : 'Share with the circle'}
+          {justSaved ? <><Icon name="check" size={17} stroke={ON_ACCENT} sw={2.2} /> Saved</> : 'Save check-in'}
         </button>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 18 }}>
-          {justShared
-            ? <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: ACCENT }}>{isPast ? 'kept.' : 'kept — see you Sunday.'}</span>
-            : <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>{isPast ? 'You can change this any time.' : 'You can change this any time before Sunday evening.'}</span>}
+          <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: C.muted }}>
+            {justSaved ? (isPast ? 'kept.' : 'kept — see you Sunday.') : 'The circle only sees fields marked “Shared.”'}
+          </span>
         </div>
       </div>
       </div>

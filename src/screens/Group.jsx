@@ -42,7 +42,7 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
 
   // Your own check-in status, for the compose prompt at the top of Circle.
   const mine = people.find((p) => p.you)
-  const myCheckedIn = Boolean(mine && (mine.mood || mine.lookingForward || mine.shareText))
+  const myCheckedIn = Boolean(mine && (mine.mood || mine.moodNote || mine.lookingForward || mine.significantIssues || mine.shareText))
   const myMood = moodByKey(mine?.mood)
 
   const MiniStrip = ({ n }) => (
@@ -62,7 +62,7 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
 
   const Person = ({ p }) => {
     const mood = moodByKey(p.mood)
-    const expandable = Boolean(p.lookingForward || p.shareText || (p.photos && p.photos.length))
+    const expandable = Boolean(p.moodNote || p.lookingForward || p.significantIssues || p.shareText || (p.photos && p.photos.length))
     const open = openId === p.id
     return (
       <div onClick={expandable ? () => setOpenId(open ? null : p.id) : undefined}
@@ -108,10 +108,22 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
         {/* expanded check-in: looking-forward + something shared */}
         {open && (
           <div style={{ marginTop: 16, paddingTop: 14, paddingLeft: 52, borderTop: `1px solid ${C.hair}`, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {p.moodNote && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <MonoLabel>How they're feeling</MonoLabel>
+                <span style={{ fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>{p.moodNote}</span>
+              </div>
+            )}
             {p.lookingForward && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <MonoLabel>Looking forward to</MonoLabel>
                 <span style={{ fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>{p.lookingForward}</span>
+              </div>
+            )}
+            {p.significantIssues && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <MonoLabel>Significant for their recovery</MonoLabel>
+                <span style={{ fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>{p.significantIssues}</span>
               </div>
             )}
             {p.shareText && (
@@ -145,7 +157,7 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
     const shownWeek = p.week + offset // this person's own week at the current offset
     const valid = shownWeek >= 1
     const ci = (valid && circle.ready && circle.checkinByWeek[`${p.id}:${shownWeek}`]) || null
-    const has = Boolean(ci && (ci.mood || ci.lookingForward || ci.shareText || (ci.photos && ci.photos.length)))
+    const has = Boolean(ci && (ci.mood || ci.moodNote || ci.lookingForward || ci.significantIssues || ci.shareText || (ci.photos && ci.photos.length)))
     const mood = moodByKey(ci?.mood)
     const seed = ci ? { mood: ci.mood, forward: ci.lookingForward, win: ci.shareText } : {}
     return (
@@ -167,10 +179,22 @@ export default function Group({ me, openCheckin, openCheckinForWeek, goToYou }) 
 
         {!valid ? null : has ? (
           <div style={{ marginTop: 16, paddingTop: 14, paddingLeft: 52, borderTop: `1px solid ${C.hair}`, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {ci.moodNote && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <MonoLabel>How they're feeling</MonoLabel>
+                <span style={{ fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>{ci.moodNote}</span>
+              </div>
+            )}
             {ci.lookingForward && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <MonoLabel>Looking forward to</MonoLabel>
                 <span style={{ fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>{ci.lookingForward}</span>
+              </div>
+            )}
+            {ci.significantIssues && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <MonoLabel>Significant for their recovery</MonoLabel>
+                <span style={{ fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5 }}>{ci.significantIssues}</span>
               </div>
             )}
             {ci.shareText && (

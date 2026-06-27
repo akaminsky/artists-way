@@ -184,20 +184,12 @@ export default function Journey({ me, setMe, notes, photos, openDetail }) {
             </Block>
 
             <Block label="Check-in">
-              {wCheckin && (wCheckin.lookingForward || wCheckin.shareText) ? (
+              {wCheckin && (wCheckin.moodNote || wCheckin.lookingForward || wCheckin.significant || wCheckin.shareText) ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-                  {wCheckin.lookingForward && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      <span style={ciSubLabel}>Looking forward to</span>
-                      <p style={ciBody}>{wCheckin.lookingForward}</p>
-                    </div>
-                  )}
-                  {wCheckin.shareText && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      <span style={ciSubLabel}>Shared with the group</span>
-                      <p style={ciBody}>{wCheckin.shareText}</p>
-                    </div>
-                  )}
+                  {wCheckin.moodNote && <CiLine label="How you're feeling" body={wCheckin.moodNote} shared={wCheckin.shared?.moodNote} />}
+                  {wCheckin.lookingForward && <CiLine label="Looking forward to" body={wCheckin.lookingForward} shared={wCheckin.shared?.forward} />}
+                  {wCheckin.significant && <CiLine label="Significant for your recovery" body={wCheckin.significant} shared={wCheckin.shared?.significant} />}
+                  {wCheckin.shareText && <CiLine label="To share with the group" body={wCheckin.shareText} shared={wCheckin.shared?.share} />}
                 </div>
               ) : dash}
             </Block>
@@ -263,6 +255,20 @@ const noteStamp = (iso) => new Date(iso).toLocaleString(undefined, { month: 'sho
 // text, so "looking forward to" and "shared" read the same and are clearly named.
 const ciSubLabel = { fontFamily: SERIF, fontSize: 12.5, fontStyle: 'italic', color: C.muted, letterSpacing: '0.01em' }
 const ciBody = { fontFamily: SERIF, fontSize: 15, color: C.ink, lineHeight: 1.5, margin: 0 }
+
+// One labeled line of your check-in, with a small marker when it was shared with
+// the circle (everything else stays private to this journal).
+function CiLine({ label, body, shared }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+        <span style={ciSubLabel}>{label}</span>
+        {shared && <MonoLabel color={ACCENT}>shared</MonoLabel>}
+      </div>
+      <p style={ciBody}>{body}</p>
+    </div>
+  )
+}
 
 const ACCENT_RING = 'rgba(138,94,126,0.22)'
 
