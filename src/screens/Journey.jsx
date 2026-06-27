@@ -174,11 +174,19 @@ export default function Journey({ me, setMe, notes, photos, openDetail }) {
 
             <Block label="Artist date">
               {wDate ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ flex: 1, fontFamily: SERIF, fontSize: 15.5, color: C.ink, lineHeight: 1.35 }}>{wDate.place}</span>
-                  {wDate.done
-                    ? <Icon name="check" size={16} stroke={ACCENT} sw={2.2} />
-                    : <MonoLabel>planned</MonoLabel>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ flex: 1, fontFamily: SERIF, fontSize: 15.5, color: C.ink, lineHeight: 1.35 }}>{wDate.place}</span>
+                    {wDate.done
+                      ? <Icon name="check" size={16} stroke={ACCENT} sw={2.2} />
+                      : <MonoLabel>planned</MonoLabel>}
+                  </div>
+                  {wDate.reflection && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <span style={ciSubLabel}>How it went</span>
+                      <p style={ciBody}>{wDate.reflection}</p>
+                    </div>
+                  )}
                 </div>
               ) : dash}
             </Block>

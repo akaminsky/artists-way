@@ -34,7 +34,7 @@ export function useJourney() {
         .select('week, mood, mood_note, looking_forward, significant_issues, share_text, share_mood, share_mood_note, share_looking_forward, share_significant_issues, share_share_text, updated_at')
         .eq('user_id', uid),
       supabase.from('artist_dates').select('week').eq('user_id', uid),
-      supabase.from('artist_date_details').select('week, what_i_did').eq('user_id', uid),
+      supabase.from('artist_date_details').select('week, what_i_did, note').eq('user_id', uid),
       supabase.from('exercises').select('id, week, label'),
       supabase.from('exercise_answers').select('exercise_id, answer').eq('user_id', uid),
       supabase.from('exercise_progress').select('exercise_id, completed').eq('user_id', uid),
@@ -82,13 +82,17 @@ export function useJourney() {
       .filter((c) => c.mood || c.moodNote || c.lookingForward || c.significant || c.shareText)
       .sort((a, b) => b.week - a.week))
 
-    // artist dates: any week that's marked done or has a written note
+    // artist dates: any week that's marked done, planned, or reflected on
     const doneWeeks = new Set((adRes.data ?? []).map((r) => r.week))
-    const detailByWeek = {}
-    for (const r of (adDetRes.data ?? [])) if ((r.what_i_did || '').trim()) detailByWeek[r.week] = r.what_i_did
-    const adWeeks = new Set([...doneWeeks, ...Object.keys(detailByWeek).map(Number)])
+    const planByWeek = {}
+    const reflectionByWeek = {}
+    for (const r of (adDetRes.data ?? [])) {
+      if ((r.what_i_did || '').trim()) planByWeek[r.week] = r.what_i_did
+      if ((r.note || '').trim()) reflectionByWeek[r.week] = r.note
+    }
+    const adWeeks = new Set([...doneWeeks, ...Object.keys(planByWeek).map(Number), ...Object.keys(reflectionByWeek).map(Number)])
     setArtistDates([...adWeeks]
-      .map((w) => ({ week: w, place: detailByWeek[w] || 'Artist date', done: doneWeeks.has(w) }))
+      .map((w) => ({ week: w, place: planByWeek[w] || 'Artist date', reflection: reflectionByWeek[w] || '', done: doneWeeks.has(w) }))
       .sort((a, b) => b.week - a.week))
 
     // reflections: every exercise you've either checked done OR written an

@@ -50,7 +50,8 @@ export function useTracking() {
   const [loading, setLoading] = useState(true)
   const [doneDates, setDoneDates] = useState(() => new Set()) // morning-pages dates
   const [artistDone, setArtistDone] = useState(false)
-  const [artistPlan, setArtistPlan] = useState('')
+  const [artistPlan, setArtistPlan] = useState('')       // what the date is (plan)
+  const [artistReflection, setArtistReflection] = useState('') // how it went
   // exercises: catalog rows for the week, joined with this user's progress/answer
   const [exercises, setExercises] = useState([]) // [{ id, label, prompt, done, answer }]
   const [checkin, setCheckin] = useState(null) // weekly_checkins row for this week, or null
@@ -64,7 +65,7 @@ export function useTracking() {
         .eq('user_id', uid).gte('date', weekDates[0]).lte('date', weekDates[6]),
       supabase.from('artist_dates').select('id')
         .eq('user_id', uid).eq('week', week).maybeSingle(),
-      supabase.from('artist_date_details').select('what_i_did')
+      supabase.from('artist_date_details').select('what_i_did, note')
         .eq('user_id', uid).eq('week', week).maybeSingle(),
       supabase.from('exercises').select('id,label,prompt,sort')
         .eq('week', week).order('sort'),
@@ -76,6 +77,7 @@ export function useTracking() {
     setDoneDates(new Set((pagesRes.data ?? []).map((r) => r.date)))
     setArtistDone(Boolean(adRes.data))
     setArtistPlan(detailRes.data?.what_i_did ?? '')
+    setArtistReflection(detailRes.data?.note ?? '')
     setCheckin(shapeCheckin(ciRes.data))
 
     // Pull this user's progress + answers for just this week's exercise ids.
@@ -140,12 +142,22 @@ export function useTracking() {
     if (res.error) load()
   }, [active, artistDone, uid, cohortId, week, load])
 
-  // ── Artist Date: private plan/note ──
+  // ── Artist Date: private plan ("what the date is") ──
   const saveArtistPlan = useCallback(async (text) => {
     if (!active) return
     setArtistPlan(text)
     const res = await supabase.from('artist_date_details')
       .upsert({ user_id: uid, week, what_i_did: text, updated_at: new Date().toISOString() }, { onConflict: 'user_id,week' })
+    if (res.error) load()
+  }, [active, uid, week, load])
+
+  // ── Artist Date: private reflection ("how it went") — uses the `note` column ──
+  // Upserts only `note`, so it never clobbers the plan and vice-versa.
+  const saveArtistReflection = useCallback(async (text) => {
+    if (!active) return
+    setArtistReflection(text)
+    const res = await supabase.from('artist_date_details')
+      .upsert({ user_id: uid, week, note: text, updated_at: new Date().toISOString() }, { onConflict: 'user_id,week' })
     if (res.error) load()
   }, [active, uid, week, load])
 
@@ -250,6 +262,8 @@ export function useTracking() {
     // artist date
     artistDone,
     artistPlan,
+    artistReflection,
+    saveArtistReflection,
     toggleArtistDate,
     saveArtistPlan,
     // exercises

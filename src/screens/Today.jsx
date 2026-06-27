@@ -64,6 +64,10 @@ export default function Today({ me, setMe, track, notes, photos, name, openDetai
   const saveADPlan = t
     ? t.saveArtistPlan
     : (note) => setMe((m) => ({ ...m, artistDate: { ...m.artistDate, plan: note } }))
+  const adReflection = t ? t.artistReflection : (me.artistDate.reflection || '')
+  const saveADReflection = t
+    ? t.saveArtistReflection
+    : (note) => setMe((m) => ({ ...m, artistDate: { ...m.artistDate, reflection: note } }))
 
   // Exercises: from the cohort catalog when live, else the local seed list.
   const exItems = t
@@ -216,6 +220,22 @@ export default function Today({ me, setMe, track, notes, photos, name, openDetai
             <Icon name="bulb" size={14} stroke={ACCENT} sw={1.7} />
             <span style={{ fontFamily: SERIF, fontSize: 13, fontStyle: 'italic', color: ACCENT, whiteSpace: 'nowrap' }}>browse ideas</span>
           </button>
+        </div>
+        {/* How it went — a private reflection after the date (separate field) */}
+        <div onClick={(e) => { e.stopPropagation(); openDetail({
+            kicker: 'Artist Date · reflection', title: 'How did it go?',
+            prompt: 'What did you do, and how did it leave you feeling?',
+            placeholder: 'a few words on how it went…', note: adReflection || '',
+            save: saveADReflection,
+          }) }}
+          style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.hair}`, cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <MonoLabel>How it went</MonoLabel>
+            {!adReflection && <Icon name="pen" size={12} stroke={C.muted} />}
+          </div>
+          <p style={{ fontFamily: SERIF, fontSize: adReflection ? 15 : 13.5, fontStyle: adReflection ? 'normal' : 'italic', color: adReflection ? C.ink : C.muted, margin: '6px 0 0', lineHeight: 1.45 }}>
+            {adReflection || 'Tap to reflect on your artist date.'}
+          </p>
         </div>
       </Card>
 
