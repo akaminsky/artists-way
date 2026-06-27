@@ -3,14 +3,30 @@
 // backend (per-user tracking + shared circle) in the next phase.
 
 // ── Moods ─────────────────────────────────────────────
+// Two emotions per core (emotion-wheel): Surprise · Happy · Anger · Fear · Sad ·
+// Disgust — each chosen for what comes up in The Artist's Way.
 export const MOODS = [
-  { key: 'energized',   label: 'Energized',   color: '#C98A2B', glyph: 'spark' },
-  { key: 'curious',     label: 'Curious',     color: '#6E8B6A', glyph: 'leaf'  },
-  { key: 'flowing',     label: 'Flowing',     color: '#5E7E9B', glyph: 'wave'  },
-  { key: 'stuck',       label: 'Stuck',       color: '#9A8472', glyph: 'knot'  },
-  { key: 'overwhelmed', label: 'Overwhelmed', color: '#B5645C', glyph: 'storm' },
+  { key: 'energized',      label: 'Energized',      color: '#C98A2B', glyph: 'spark'   }, // surprise
+  { key: 'curious',        label: 'Curious',        color: '#6E8B6A', glyph: 'leaf'    }, // surprise
+  { key: 'flowing',        label: 'Flowing',        color: '#5E7E9B', glyph: 'wave'    }, // happy
+  { key: 'peaceful',       label: 'Peaceful',       color: '#5E9B8E', glyph: 'feather' }, // happy
+  { key: 'frustrated',     label: 'Frustrated',     color: '#C2603F', glyph: 'bolt'    }, // anger
+  { key: 'resentful',      label: 'Resentful',      color: '#A1564B', glyph: 'flame'   }, // anger
+  { key: 'anxious',        label: 'Anxious',        color: '#7E6FA8', glyph: 'cloud'   }, // fear
+  { key: 'insecure',       label: 'Insecure',       color: '#877BA3', glyph: 'moon'    }, // fear
+  { key: 'stuck',          label: 'Stuck',          color: '#9A8472', glyph: 'knot'    }, // sad
+  { key: 'discouraged',    label: 'Discouraged',    color: '#7C8490', glyph: 'tear'    }, // sad
+  { key: 'overwhelmed',    label: 'Overwhelmed',    color: '#B5645C', glyph: 'storm'   }, // disgust
+  { key: 'self-conscious', label: 'Self-conscious', color: '#8C7C56', glyph: 'eye'     }, // disgust
 ];
-export const moodByKey = (k) => MOODS.find((m) => m.key === k) || null;
+
+// A write-in emotion (any value not in MOODS) renders with a neutral colour and
+// the "pen" glyph, so custom moods display everywhere the presets do.
+export const CUSTOM_MOOD_COLOR = '#8A7C86';
+export const moodByKey = (k) =>
+  !k ? null
+    : (MOODS.find((m) => m.key === k)
+       || { key: k, label: k, color: CUSTOM_MOOD_COLOR, glyph: 'pen', custom: true });
 
 // ── This week's chapter work (Week 4: Recovering a Sense of Integrity) ──
 export const EXERCISES = [

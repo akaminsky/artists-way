@@ -10,6 +10,9 @@ import { WEEK, MOODS } from '../data/seed'
 const DEFAULT_SHARES = { mood: true, moodNote: false, forward: false, significant: false, share: false }
 const EMPTY_DRAFT = { mood: '', moodNote: '', forward: '', significant: '', share: '', shares: { ...DEFAULT_SHARES } }
 
+// A mood value that isn't one of the presets is a write-in.
+const isCustomMood = (m) => !!m && !MOODS.some((x) => x.key === m)
+
 // Small "who can see this" toggle that sits with each field's label.
 function ShareToggle({ on, onClick }) {
   return (
@@ -53,33 +56,38 @@ export default function Checkin({ me, setMe, track, onClose, presetWeek }) {
   const isPast = presetWeek != null
   const [justSaved, setJustSaved] = useState(false)
   const [draft, setDraft] = useState(EMPTY_DRAFT)
+  const [showCustom, setShowCustom] = useState(false) // write-your-own emotion input open
   const seeded = useRef(false)
 
   // Seed once. Backend: load the full private record for this/the past week.
   // Prototype: read the local me.checkin.
   useEffect(() => {
     if (seeded.current) return
+    const apply = (c) => { setDraft(c); setShowCustom(isCustomMood(c.mood)) }
     if (t) {
       if (isPast) {
         seeded.current = true
-        track.getCheckin(presetWeek).then((c) => { if (c) setDraft({ ...EMPTY_DRAFT, ...c, shares: { ...DEFAULT_SHARES, ...c.shares } }) })
+        track.getCheckin(presetWeek).then((c) => { if (c) apply({ ...EMPTY_DRAFT, ...c, shares: { ...DEFAULT_SHARES, ...c.shares } }) })
         return
       }
       if (t.loading) return
       seeded.current = true
-      if (t.checkin) setDraft({ ...EMPTY_DRAFT, ...t.checkin, shares: { ...DEFAULT_SHARES, ...t.checkin.shares } })
+      if (t.checkin) apply({ ...EMPTY_DRAFT, ...t.checkin, shares: { ...DEFAULT_SHARES, ...t.checkin.shares } })
       return
     }
     // prototype
     seeded.current = true
     const c = me?.checkin
-    if (c) setDraft({ ...EMPTY_DRAFT, mood: c.mood || '', moodNote: c.moodNote || '', forward: c.forward || '', significant: c.significant || '', share: c.win || c.share || '', shares: { ...DEFAULT_SHARES, ...(c.shares || {}) } })
+    if (c) apply({ ...EMPTY_DRAFT, mood: c.mood || '', moodNote: c.moodNote || '', forward: c.forward || '', significant: c.significant || '', share: c.win || c.share || '', shares: { ...DEFAULT_SHARES, ...(c.shares || {}) } })
   }, [t, t?.loading, t?.checkin, isPast, presetWeek])
 
   const weekN = isPast ? presetWeek : (t ? t.week : WEEK.n)
   const setVal = (patch) => setDraft((d) => ({ ...d, ...patch }))
   const toggleShare = (key) => setDraft((d) => ({ ...d, shares: { ...d.shares, [key]: !d.shares[key] } }))
-  const pickMood = (key) => setDraft((d) => ({ ...d, mood: d.mood === key ? '' : key }))
+  const pickMood = (key) => { setShowCustom(false); setDraft((d) => ({ ...d, mood: d.mood === key ? '' : key })) }
+  const moodIsCustom = isCustomMood(draft.mood)
+  const customOpen = showCustom || moodIsCustom
+  const openCustom = () => { setShowCustom(true); if (!moodIsCustom) setVal({ mood: '' }) }
   const anything = draft.mood || draft.moodNote || draft.forward || draft.significant || draft.share
 
   const save = async () => {
@@ -136,7 +144,30 @@ export default function Checkin({ me, setMe, track, onClose, presetWeek }) {
               </button>
             )
           })}
+          {/* write your own emotion */}
+          <button onClick={openCustom}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+              padding: '10px 14px', borderRadius: 13,
+              background: customOpen ? 'rgba(138,124,134,0.16)' : C.card,
+              border: `1.5px solid ${customOpen ? '#8A7C86' : C.hair}`,
+              transition: 'all 0.2s ease', WebkitTapHighlightColor: 'transparent',
+            }}>
+            <Icon name="pen" size={16} stroke={customOpen ? '#8A7C86' : C.muted} sw={1.7} />
+            <span style={{ fontFamily: SERIF, fontSize: 15.5, fontStyle: 'italic', color: customOpen ? '#8A7C86' : C.mid, fontWeight: customOpen ? 500 : 400 }}>Something else</span>
+          </button>
         </div>
+        {customOpen && (
+          <input
+            type="text" value={moodIsCustom ? draft.mood : ''} onChange={(e) => setVal({ mood: e.target.value })}
+            placeholder="name the feeling in your own words…" autoFocus maxLength={40}
+            style={{
+              width: '100%', background: C.card, border: `1px solid ${C.hair}`, borderRadius: 12,
+              padding: '12px 14px', fontFamily: SERIF, fontSize: 15.5, fontStyle: 'italic', color: C.ink, outline: 'none',
+              boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)',
+            }}
+          />
+        )}
       </div>
 
       <FieldRow label="Say more about how you're feeling" value={draft.moodNote} onChange={(v) => setVal({ moodNote: v })}

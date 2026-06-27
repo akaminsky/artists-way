@@ -27,6 +27,12 @@ export function Icon({ name, size = 20, stroke = C.mid, sw = 1.6, fill = 'none',
     headphones: <g {...p}><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></g>,
     image: <g {...p}><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.4"/><path d="M5 17l4.5-4 3 2.5L16 11l3 3"/></g>,
     book:  <g {...p}><path d="M6 4h11a1 1 0 0 1 1 1v15H8a2 2 0 0 0-2 2Z"/><path d="M6 20a2 2 0 0 1 2-2h9"/></g>,
+    // mood glyphs
+    bolt:  <g {...p}><path d="M13 2 5 14h6l-1 8 8-12h-6l1-8Z"/></g>,
+    flame: <g {...p}><path d="M12 3c4 5 5 7 5 10a5 5 0 0 1-10 0c0-2 1-3.4 2.6-4.7C11 9.4 12 6.2 12 3Z"/></g>,
+    cloud: <g {...p}><path d="M7 18a4 4 0 0 1-.5-7.97A5.5 5.5 0 0 1 17.4 11 3.5 3.5 0 0 1 17 18Z"/></g>,
+    tear:  <g {...p}><path d="M12 3c4 6 6 9 6 12a6 6 0 0 1-12 0c0-3 2-6 6-12Z"/></g>,
+    eye:   <g {...p}><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></g>,
   }
   return <svg width={size} height={size} viewBox="0 0 24 24" style={{ display: 'block', ...style }}>{paths[name]}</svg>
 }
@@ -101,8 +107,9 @@ export function PagesStrip({ days, todayIndex = -1, letters, dot = 9, gap = 7, i
 }
 
 export function MoodGlyph({ glyph, color, size = 16 }) {
-  const map = { spark: 'spark', leaf: 'leaf', wave: 'wave', knot: 'knot', storm: 'storm' }
-  return <Icon name={map[glyph] || 'leaf'} size={size} stroke={color} sw={1.7} />
+  // glyph values are icon names (presets + 'pen' for write-ins); fall back to leaf.
+  const known = ['spark', 'leaf', 'wave', 'feather', 'bolt', 'flame', 'cloud', 'moon', 'knot', 'tear', 'storm', 'eye', 'pen']
+  return <Icon name={known.includes(glyph) ? glyph : 'leaf'} size={size} stroke={color} sw={1.7} />
 }
 
 // Mood pill rendered per the chosen style: 'dot' | 'word' | 'full'
