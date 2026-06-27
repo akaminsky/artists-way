@@ -211,7 +211,7 @@ export default function App() {
       {/* scroll content */}
       <div className="app-scroll">
         {tab === 'today' && <Today me={me} setMe={setMe} track={track} notes={notes} photos={photos} name={myName} openDetail={setDetail} openCheckin={openCheckin} openIdeas={openIdeas} />}
-        {tab === 'you' && <Journey me={me} setMe={setMe} notes={notes} photos={photos} openDetail={setDetail} />}
+        {tab === 'you' && <Journey me={me} setMe={setMe} notes={notes} photos={photos} openDetail={setDetail} openCheckin={openCheckin} openCheckinForWeek={openCheckinForWeek} />}
         {tab === 'group' && <Group me={me} openCheckin={openCheckin} openCheckinForWeek={openCheckinForWeek} goToYou={goToYou} />}
       </div>
 

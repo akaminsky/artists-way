@@ -9,7 +9,7 @@ import { PhotoStrip } from '../components/Photos'
 import { WEEK, JOURNEY, EXERCISES, moodByKey } from '../data/seed'
 import { useJourney } from '../lib/journey'
 
-export default function Journey({ me, setMe, notes, photos, openDetail }) {
+export default function Journey({ me, setMe, notes, photos, openDetail, openCheckin, openCheckinForWeek }) {
   const j = useJourney()
   const backend = j.ready
   const currentWeek = backend ? j.week : WEEK.n
@@ -64,6 +64,14 @@ export default function Journey({ me, setMe, notes, photos, openDetail }) {
   const wNotes = notes ? (notes.byWeek[viewWeek] || []) : []
   const wPhotos = photos ? (photos.byWeek[viewWeek] || []) : []
   const future = viewWeek > currentWeek
+  // Fill in / edit your check-in for the selected week (current or any past week).
+  // Current week uses the normal composer; past weeks open the week-targeted one.
+  const canEditCheckin = backend && !future && (openCheckin || openCheckinForWeek)
+  const startCheckin = () => {
+    if (viewWeek === currentWeek) (openCheckin || openCheckinForWeek)?.(viewWeek)
+    else openCheckinForWeek?.(viewWeek)
+  }
+  const wCheckinHasText = Boolean(wCheckin && (wCheckin.moodNote || wCheckin.lookingForward || wCheckin.significant || wCheckin.shareText))
 
   const Card = ({ children, onClick, style = {} }) => (
     <div onClick={onClick} style={{
@@ -192,14 +200,26 @@ export default function Journey({ me, setMe, notes, photos, openDetail }) {
             </Block>
 
             <Block label="Check-in">
-              {wCheckin && (wCheckin.moodNote || wCheckin.lookingForward || wCheckin.significant || wCheckin.shareText) ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-                  {wCheckin.moodNote && <CiLine label="How you're feeling" body={wCheckin.moodNote} shared={wCheckin.shared?.moodNote} />}
-                  {wCheckin.lookingForward && <CiLine label="Looking forward to" body={wCheckin.lookingForward} shared={wCheckin.shared?.forward} />}
-                  {wCheckin.significant && <CiLine label="Significant for your recovery" body={wCheckin.significant} shared={wCheckin.shared?.significant} />}
-                  {wCheckin.shareText && <CiLine label="To share with the group" body={wCheckin.shareText} shared={wCheckin.shared?.share} />}
-                </div>
-              ) : dash}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {wCheckinHasText && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+                    {wCheckin.moodNote && <CiLine label="How you're feeling" body={wCheckin.moodNote} shared={wCheckin.shared?.moodNote} />}
+                    {wCheckin.lookingForward && <CiLine label="Looking forward to" body={wCheckin.lookingForward} shared={wCheckin.shared?.forward} />}
+                    {wCheckin.significant && <CiLine label="Significant for your recovery" body={wCheckin.significant} shared={wCheckin.shared?.significant} />}
+                    {wCheckin.shareText && <CiLine label="To share with the group" body={wCheckin.shareText} shared={wCheckin.shared?.share} />}
+                  </div>
+                )}
+                {!wCheckinHasText && !canEditCheckin && dash}
+                {canEditCheckin && (
+                  <button onClick={startCheckin}
+                    style={{ alignSelf: 'flex-start', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, WebkitTapHighlightColor: 'transparent' }}>
+                    <Icon name="pen" size={13} stroke={ACCENT} sw={1.7} />
+                    <span style={{ fontFamily: SERIF, fontSize: 13.5, fontStyle: 'italic', color: ACCENT }}>
+                      {wCheckin ? 'Edit your check-in' : `Add your check-in for Week ${viewWeek}`}
+                    </span>
+                  </button>
+                )}
+              </div>
             </Block>
 
             <Block label={`Exercises${wRefs.length ? ` · ${wRefs.length}` : ''}`}>
